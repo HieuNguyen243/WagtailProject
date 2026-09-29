@@ -106,6 +106,15 @@ Sau khi đăng nhập vào trang quản trị, tìm mục **"Quản lý CRM"** t
 |---|---|
 | **Khách hàng** | Xem, thêm, sửa, xóa, tìm kiếm khách hàng theo tên / email / SĐT |
 | **Đơn hàng** | Xem, thêm, sửa, xóa, tìm kiếm đơn hàng theo mã ĐH / tên KH |
+| **Phân tích AI** | Phân tích số liệu tổng hợp về khách hàng và đơn hàng |
+
+### Cấu hình phân tích AI
+
+Trang **Phân tích AI** gửi số liệu tổng hợp, không gửi tên hoặc email khách hàng, đến API tương thích OpenAI Chat Completions. Cấu hình các biến môi trường sau trước khi chạy ứng dụng:
+
+- `AI_API_KEY` — khóa API (bắt buộc).
+- `AI_API_URL` — URL API (mặc định `https://api.openai.com/v1/chat/completions`).
+- `AI_MODEL` — tên model (mặc định `gpt-4o-mini`).
 
 ### Phương thức thanh toán hỗ trợ
 

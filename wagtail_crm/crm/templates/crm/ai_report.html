@@ -1,0 +1,51 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Phân tích CRM bằng AI{% endblock %}
+
+{% block content %}
+    <header class="w-header">
+        <div class="row">
+            <div class="left">
+                <div class="col">
+                    <h1 class="w-header__title">Phân tích CRM bằng AI</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="nice-padding">
+        <section class="w-panel">
+            <h2 class="w-panel__heading">Số liệu tổng quan</h2>
+            <dl>
+                <dt>Số khách hàng</dt>
+                <dd>{{ report.customer_count }}</dd>
+                <dt>Số đơn hàng</dt>
+                <dd>{{ report.order_count }}</dd>
+                <dt>Tổng doanh thu</dt>
+                <dd>{{ report.total_revenue_vnd }} VND</dd>
+                <dt>Giá trị đơn hàng trung bình</dt>
+                <dd>{{ report.average_order_vnd }} VND</dd>
+            </dl>
+        </section>
+
+        <section class="w-panel">
+            <h2 class="w-panel__heading">Tạo phân tích</h2>
+            <form method="post">
+                {% csrf_token %}
+                <label for="id_prompt">Yêu cầu phân tích</label>
+                <textarea id="id_prompt" name="prompt" rows="3" maxlength="500">{{ prompt }}</textarea>
+                <button type="submit" class="button button-primary">Phân tích dữ liệu</button>
+            </form>
+            {% if error %}
+                <p class="help-critical" role="alert">{{ error }}</p>
+            {% endif %}
+        </section>
+
+        {% if analysis %}
+            <section class="w-panel">
+                <h2 class="w-panel__heading">Kết quả phân tích</h2>
+                <div>{{ analysis|linebreaksbr }}</div>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}
