@@ -1,0 +1,66 @@
+{% extends "wagtailadmin/base.html" %}
+{% load static %}
+{% block titletag %}AI Workspace · {{ customer.name }}{% endblock %}
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/wagtail_admin_crm.css' %}">
+{% endblock %}
+{% block content %}
+  <header class="w-header crm-admin-header">
+    <div class="w-header__title">
+      <div class="crm-breadcrumb">AI CRM / Khách hàng / Workspace</div>
+      <h1>AI Workspace <span class="crm-title-chip">{{ customer.name }}</span></h1>
+      <p class="crm-admin-subtitle">Phân tích khách hàng, gợi ý email và xem lịch sử AI.</p>
+    </div>
+    <div class="w-header__actions">
+      <a href="{% url 'crm_admin:dashboard' %}" class="button button-secondary">← Tổng quan</a>
+      <a href="{% url 'wagtailsnippets_crm_customer:edit' customer.pk %}" class="button">Chỉnh sửa</a>
+    </div>
+  </header>
+
+  <div class="crm-admin-shell">
+    <section class="crm-panel crm-profile-panel">
+      <div class="crm-profile">
+        <span class="crm-avatar crm-avatar--xl">{{ customer.name|first|upper }}</span>
+        <div class="crm-profile__identity"><span class="crm-eyebrow">CUSTOMER</span><h2>{{ customer.name }}</h2><p>{{ customer.email }} · {{ customer.company|default:'Chưa có công ty' }}</p></div>
+        <span class="crm-badge crm-badge--{{ customer.segment }}">{{ customer.get_segment_display }}</span>
+      </div>
+      <div class="crm-kpi-mini-grid"><div><span>Tổng chi tiêu</span><strong>{{ customer.total_spent_display }}</strong></div><div><span>Số đơn</span><strong>{{ customer.order_count }}</strong></div><div><span>AI gần nhất</span><strong>{% if customer.ai_last_run_at %}{{ customer.ai_last_run_at|date:'d/m H:i' }}{% else %}—{% endif %}</strong></div></div>
+      <div class="crm-actions">
+        <form method="post" action="{% url 'crm_admin:analyze' customer.pk %}">{% csrf_token %}<button class="button button-primary" type="submit">✦ Phân tích AI</button></form>
+        <form method="post" action="{% url 'crm_admin:email' customer.pk %}">{% csrf_token %}<button class="button button-secondary" type="submit">✉ Gợi ý email</button></form>
+        <a href="{% url 'wagtailsnippets_crm_order:list' %}?customer={{ customer.pk }}" class="button button-secondary">▣ Đơn hàng</a>
+      </div>
+    </section>
+
+    <div class="crm-workspace-grid">
+      <section class="crm-panel crm-panel--ai">
+        <div class="crm-panel__head"><div><span class="crm-eyebrow">AI INSIGHTS</span><h2>Kết quả mới nhất</h2></div></div>
+        <div class="crm-ai-box"><span class="crm-ai-tag">SUMMARY</span><p>{{ customer.ai_summary|default:'Chưa có kết quả. Nhấn “Phân tích AI”.' }}</p></div>
+        <div class="crm-ai-box"><span class="crm-ai-tag">RECOMMENDATION</span><p>{{ customer.ai_recommendation|default:'Chưa có khuyến nghị.' }}</p></div>
+        <div class="crm-ai-box"><span class="crm-ai-tag">EMAIL DRAFT</span>{% if customer.ai_email_subject %}<strong>{{ customer.ai_email_subject }}</strong><p class="crm-preline">{{ customer.ai_email_body }}</p>{% else %}<p>Chưa có bản nháp email.</p>{% endif %}</div>
+      </section>
+
+      <section class="crm-panel">
+        <div class="crm-panel__head"><div><span class="crm-eyebrow">HISTORY</span><h2>Nhật ký AI</h2></div><a href="{% url 'wagtailsnippets_crm_aianalysislog:list' %}">Xem tất cả →</a></div>
+        <div class="crm-log-list">
+          {% for log in logs %}<div class="crm-log"><span class="crm-log__dot"></span><div><strong>{{ log.get_action_type_display }}</strong><small>{{ log.created_at|date:'d/m/Y H:i' }} · {{ log.model_name|default:'demo' }}</small></div></div>{% empty %}<div class="crm-empty">Chưa có hoạt động AI.</div>{% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <section class="crm-panel">
+      <div class="crm-panel__head"><div><span class="crm-eyebrow">ORDERS</span><h2>Lịch sử đơn hàng</h2></div></div>
+      <div class="crm-table-wrap">
+        <table class="crm-table">
+          <thead><tr><th>Mã đơn</th><th>Ngày</th><th>Thanh toán</th><th>Vận chuyển</th><th>Tổng tiền</th><th>Trạng thái</th></tr></thead>
+          <tbody>
+            {% for order in orders %}
+              <tr><td><strong>{{ order.order_code }}</strong></td><td>{{ order.created_at|date:'d/m/Y' }}</td><td>{{ order.get_payment_method_display }}</td><td>{{ order.get_shipping_provider_display }}</td><td>{{ order.amount_display }}</td><td><span class="crm-badge crm-badge--{{ order.status }}">{{ order.get_status_display }}</span></td></tr>
+            {% empty %}<tr><td colspan="6" class="crm-empty">Chưa có đơn hàng.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+{% endblock %}

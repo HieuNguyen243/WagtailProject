@@ -1,0 +1,61 @@
+{% extends "wagtailadmin/base.html" %}
+{% load static %}
+{% block titletag %}Báo cáo AI · CRM{% endblock %}
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/wagtail_admin_crm.css' %}">
+{% endblock %}
+{% block content %}
+  <header class="w-header crm-admin-header">
+    <div class="w-header__title">
+      <h1>Báo cáo AI <span class="crm-title-chip">CRM</span></h1>
+      <p class="crm-admin-subtitle">Tóm tắt hoạt động CRM từ dữ liệu khách hàng và đơn hàng.</p>
+    </div>
+    <div class="w-header__actions">
+      <a href="{% url 'crm_admin:dashboard' %}" class="button button-secondary">← Tổng quan</a>
+      <form method="post" action="{% url 'crm_reports:generate' %}" class="inline-form">
+        {% csrf_token %}
+        <button class="button button-primary" type="submit">✦ Tạo báo cáo mới</button>
+      </form>
+    </div>
+  </header>
+
+  <div class="crm-admin-shell">
+    <div class="crm-report-grid">
+      <section class="crm-panel crm-panel--report">
+        <div class="crm-panel__head">
+          <div>
+            <span class="crm-eyebrow">LATEST INSIGHT</span>
+            <h2>Báo cáo gần nhất</h2>
+          </div>
+          {% if latest_report %}
+            <span class="crm-badge crm-badge--green">{{ latest_report.model_name|default:'AI' }}</span>
+          {% endif %}
+        </div>
+        {% if latest_report %}
+          <div class="crm-report-content">{{ latest_report.output_text }}</div>
+          <div class="crm-report-meta">{{ latest_report.created_at|date:'d/m/Y H:i' }}</div>
+        {% else %}
+          <div class="crm-empty crm-empty--large">Chưa có báo cáo. Hãy tạo báo cáo AI đầu tiên.</div>
+        {% endif %}
+      </section>
+
+      <section class="crm-panel">
+        <div class="crm-panel__head">
+          <div>
+            <span class="crm-eyebrow">SNAPSHOT</span>
+            <h2>Chỉ số hiện tại</h2>
+          </div>
+        </div>
+        <div class="crm-stat-list">
+          <div><span>Khách hàng</span><strong>{{ metrics.customer_count }}</strong></div>
+          <div><span>Đơn hàng</span><strong>{{ metrics.order_count }}</strong></div>
+          <div><span>Doanh thu hoàn thành</span><strong>{{ metrics.revenue|floatformat:0 }} ₫</strong></div>
+          <div><span>Khách VIP</span><strong>{{ metrics.vip_count }}</strong></div>
+          <div><span>Khách cần theo dõi</span><strong>{{ metrics.risk_count }}</strong></div>
+          <div><span>Đơn đang xử lý</span><strong>{{ metrics.pending_count }}</strong></div>
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

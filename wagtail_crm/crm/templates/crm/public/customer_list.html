@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Khách hàng · AI CRM{% endblock %}
+{% block body_class %}crm-site{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/crm_home.css' %}">{% endblock %}
+{% block content %}
+<header class="site-header"><div class="site-shell site-header__inner"><a class="brand" href="/"><span class="brand__mark">✦</span><span><strong>AI CRM</strong><small>Wagtail-powered customer hub</small></span></a><nav class="site-nav"><a href="/">Tổng quan</a><a class="is-active" href="{% url 'crm_public_customers' %}">Khách hàng</a><a href="{% url 'crm_public_orders' %}">Đơn hàng</a><a href="{% url 'crm_admin:dashboard' %}">Wagtail CRM</a></nav></div></header>
+<main class="site-shell page-main">
+  <div class="section-head"><div><span class="eyebrow">CRM</span><h1>Khách hàng</h1><p class="page-subtitle">Dữ liệu hiển thị từ cùng model CRM được quản trị trực tiếp trong Wagtail Admin.</p></div><a class="btn btn--primary" href="{% url 'crm_admin:dashboard' %}">Mở quản trị CRM</a></div>
+  <div class="table-card"><div class="toolbar"><form method="get" class="search-form"><input name="q" value="{{ q }}" placeholder="Tìm tên, email, công ty..."><select name="segment"><option value="">Tất cả phân khúc</option>{% for value,label in segments %}<option value="{{ value }}" {% if segment == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select><button class="btn btn--small btn--soft">Tìm kiếm</button></form></div><div class="table-wrap"><table><thead><tr><th>Khách hàng</th><th>Công ty</th><th>Phân khúc</th><th>Chi tiêu</th><th>Đơn</th><th></th></tr></thead><tbody>{% for customer in customers %}<tr><td><div class="person"><span class="avatar">{{ customer.name|first|upper }}</span><div><strong>{{ customer.name }}</strong><small>{{ customer.email }}</small></div></div></td><td>{{ customer.company|default:'—' }}</td><td><span class="public-badge public-badge--{{ customer.segment }}">{{ customer.get_segment_display }}</span></td><td>{{ customer.total_spent|floatformat:0 }} ₫</td><td>{{ customer.order_count }}</td><td><a class="btn btn--small btn--soft" href="{% url 'crm_public_customer_detail' customer.pk %}">Mở hồ sơ</a></td></tr>{% empty %}<tr><td colspan="6" class="empty">Không có kết quả.</td></tr>{% endfor %}</tbody></table></div></div>
+</main>
+{% endblock %}

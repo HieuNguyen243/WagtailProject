@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}AI CRM · Tổng quan{% endblock %}
+{% block body_class %}crm-site{% endblock %}
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/crm_home.css' %}">
+{% endblock %}
+{% block content %}
+<header class="site-header">
+  <div class="site-shell site-header__inner">
+    <a class="brand" href="/">
+      <span class="brand__mark">✦</span>
+      <span><strong>AI CRM</strong><small>Wagtail-powered customer hub</small></span>
+    </a>
+    <nav class="site-nav">
+      <a class="is-active" href="/">Tổng quan</a>
+      <a href="{% url 'crm_public_customers' %}">Khách hàng</a>
+      <a href="{% url 'crm_public_orders' %}">Đơn hàng</a>
+      <a href="{% url 'crm_admin:dashboard' %}">Wagtail CRM</a>
+    </nav>
+  </div>
+</header>
+
+<main class="site-shell">
+  <section class="hero-card">
+    <div>
+      <span class="eyebrow">AI-POWERED CRM</span>
+      <h1>Quản lý khách hàng rõ ràng.<br><span>Hành động thông minh hơn.</span></h1>
+      <p>Frontend trình diễn dữ liệu CRM và AI; toàn bộ thao tác nghiệp vụ được đưa về Wagtail Admin để đội ngũ quản trị làm việc trong một giao diện thống nhất.</p>
+      <div class="hero-actions">
+        <a class="btn btn--primary" href="{% url 'crm_public_customers' %}">Khám phá khách hàng</a>
+        <a class="btn btn--ghost" href="{% url 'crm_admin:dashboard' %}">Mở Wagtail CRM</a>
+      </div>
+    </div>
+    <div class="hero-orbit">
+      <div class="orbit-card"><strong>✦ AI Workspace</strong><span>Phân tích, khuyến nghị và email ngay trong Wagtail Admin.</span></div>
+      <div class="orbit-stat"><strong>{{ metrics.ai_count }}</strong><span>lần xử lý AI</span></div>
+      <div class="orbit-stat"><strong>{{ metrics.vip_count }}</strong><span>khách VIP</span></div>
+    </div>
+  </section>
+
+  <section class="metric-grid">
+    <article class="metric-card"><span class="metric-icon metric-icon--violet">👥</span><div><span>Khách hàng</span><strong>{{ metrics.customer_count }}</strong></div></article>
+    <article class="metric-card"><span class="metric-icon metric-icon--blue">▣</span><div><span>Đơn hàng</span><strong>{{ metrics.order_count }}</strong></div></article>
+    <article class="metric-card"><span class="metric-icon metric-icon--green">₫</span><div><span>Doanh thu hoàn thành</span><strong>{{ metrics.revenue|floatformat:0 }} ₫</strong></div></article>
+    <article class="metric-card"><span class="metric-icon metric-icon--amber">⚠</span><div><span>Cần quan tâm</span><strong>{{ metrics.risk_count }}</strong></div></article>
+  </section>
+
+  <section class="section-block" id="customers">
+    <div class="section-head"><div><span class="eyebrow">CRM</span><h2>Khách hàng gần đây</h2></div><a href="{% url 'crm_admin:dashboard' %}">Quản trị trong Wagtail →</a></div>
+    <div class="table-card">
+      <div class="toolbar">
+        <form method="get" class="search-form">
+          <input name="q" value="{{ q }}" placeholder="Tìm tên, email, công ty...">
+          <select name="segment"><option value="">Tất cả phân khúc</option>{% for value,label in segments %}<option value="{{ value }}" {% if selected_segment == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+          <button class="btn btn--small btn--soft">Lọc</button>
+        </form>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Khách hàng</th><th>Công ty</th><th>Phân khúc</th><th>Chi tiêu</th><th>Đơn</th><th></th></tr></thead><tbody>
+      {% for customer in customers %}
+        <tr>
+          <td><div class="person"><span class="avatar">{{ customer.name|first|upper }}</span><div><strong>{{ customer.name }}</strong><small>{{ customer.email }}</small></div></div></td>
+          <td>{{ customer.company|default:'—' }}</td>
+          <td><span class="public-badge public-badge--{{ customer.segment }}">{{ customer.get_segment_display }}</span></td>
+          <td>{{ customer.total_spent|floatformat:0 }} ₫</td>
+          <td>{{ customer.order_count }}</td>
+          <td><a class="row-link" href="{% url 'crm_public_customer_detail' customer.pk %}">Chi tiết →</a></td>
+        </tr>
+      {% empty %}<tr><td colspan="6" class="empty">Chưa có khách hàng.</td></tr>{% endfor %}
+      </tbody></table></div>
+    </div>
+  </section>
+
+  <section class="split-grid">
+    <article class="panel-card">
+      <div class="section-head"><div><span class="eyebrow">SALES</span><h2>Đơn hàng gần đây</h2></div><a href="{% url 'crm_public_orders' %}">Xem tất cả →</a></div>
+      <div class="order-list">
+        {% for order in orders %}<div class="order-item"><div><strong>{{ order.order_code }}</strong><small>{{ order.customer.name }} · {{ order.created_at|date:'d/m/Y' }}</small></div><div class="order-side"><strong>{{ order.total_amount|floatformat:0 }} ₫</strong><span class="public-badge public-badge--{{ order.status }}">{{ order.get_status_display }}</span></div></div>{% empty %}<div class="empty">Chưa có đơn hàng.</div>{% endfor %}
+      </div>
+    </article>
+
+    <article class="panel-card">
+      <div class="section-head"><div><span class="eyebrow">AI ACTIVITY</span><h2>Hoạt động AI</h2></div><a href="{% url 'wagtailsnippets_crm_aianalysislog:list' %}">Mở nhật ký →</a></div>
+      <div class="timeline">
+        {% for log in ai_logs %}<div class="timeline-item"><span class="timeline-dot"></span><div><strong>{{ log.get_action_type_display }}</strong><small>{% if log.customer %}{{ log.customer.name }} · {% endif %}{{ log.created_at|date:'d/m H:i' }}</small></div></div>{% empty %}<div class="empty">Chưa có hoạt động AI.</div>{% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section class="ai-banner">
+    <div><span class="eyebrow">WAGTAIL-FIRST CRM</span><h2>Giao diện đẹp ở ngoài, quản trị tập trung ở trong.</h2><p>Frontend dùng chung design system với khu quản trị; Customer, Order, AI Workspace, Báo cáo và Nhật ký đều được xử lý trong Wagtail Admin.</p></div>
+    <a class="btn btn--light" href="{% url 'crm_admin:dashboard' %}">Mở AI CRM →</a>
+  </section>
+</main>
+
+<footer class="site-footer"><div class="site-shell"><span>AI CRM · Wagtail CMS</span><span>CRM · AI · Quản trị tập trung</span></div></footer>
+{% endblock %}

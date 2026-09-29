@@ -1,0 +1,94 @@
+{% extends "wagtailadmin/base.html" %}
+{% load static %}
+{% block titletag %}AI CRM · Tổng quan{% endblock %}
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/wagtail_admin_crm.css' %}">
+{% endblock %}
+{% block content %}
+  <header class="w-header crm-admin-header">
+    <div class="w-header__title">
+      <h1>AI CRM <span class="crm-title-chip">Tổng quan</span></h1>
+      <p class="crm-admin-subtitle">Một trung tâm duy nhất để theo dõi dữ liệu khách hàng, đơn hàng và AI.</p>
+    </div>
+    <div class="w-header__actions">
+      <a href="{% url 'crm_admin:export' %}" class="button button-secondary">⇩ Xuất CSV</a>
+      <a href="{% url 'crm_reports:index' %}" class="button button-secondary">▤ Báo cáo AI</a>
+      <a href="/" class="button button-primary">Xem Frontend</a>
+    </div>
+  </header>
+
+  <div class="crm-admin-shell">
+    <div class="crm-kpi-grid crm-kpi-grid--5">
+      <div class="crm-kpi"><span>Khách hàng</span><strong>{{ metrics.customer_count }}</strong><small>Hồ sơ CRM</small></div>
+      <div class="crm-kpi"><span>Đơn hàng</span><strong>{{ metrics.order_count }}</strong><small>Giao dịch</small></div>
+      <div class="crm-kpi crm-kpi--green"><span>Doanh thu</span><strong>{{ metrics.revenue|floatformat:0 }} ₫</strong><small>Đã hoàn thành</small></div>
+      <div class="crm-kpi crm-kpi--gold"><span>Khách VIP</span><strong>{{ metrics.vip_count }}</strong><small>Ưu tiên chăm sóc</small></div>
+      <div class="crm-kpi crm-kpi--red"><span>Cần quan tâm</span><strong>{{ metrics.risk_count }}</strong><small>Nguy cơ rời bỏ</small></div>
+    </div>
+
+    <div class="crm-quick-actions">
+      <a href="{% url 'wagtailsnippets_crm_customer:list' %}" class="crm-quick-action crm-quick-action--violet"><span>👥</span><div><strong>Khách hàng</strong><small>Quản lý hồ sơ CRM</small></div></a>
+      <a href="{% url 'wagtailsnippets_crm_order:list' %}" class="crm-quick-action crm-quick-action--blue"><span>▣</span><div><strong>Đơn hàng</strong><small>Theo dõi giao dịch</small></div></a>
+      <a href="{% url 'crm_reports:index' %}" class="crm-quick-action crm-quick-action--green"><span>✦</span><div><strong>Báo cáo AI</strong><small>Insights & đề xuất</small></div></a>
+      <a href="{% url 'wagtailsnippets_crm_aianalysislog:list' %}" class="crm-quick-action crm-quick-action--amber"><span>↶</span><div><strong>Nhật ký AI</strong><small>Lịch sử xử lý</small></div></a>
+    </div>
+
+    <div class="crm-dashboard-grid">
+      <section class="crm-panel">
+        <div class="crm-panel__head">
+          <div><span class="crm-eyebrow">CRM</span><h2>Khách hàng gần đây</h2></div>
+          <a href="{% url 'wagtailsnippets_crm_customer:list' %}">Mở danh sách →</a>
+        </div>
+        <div class="crm-table-wrap">
+          <table class="crm-table">
+            <thead><tr><th>Khách hàng</th><th>Phân khúc</th><th>Chi tiêu</th><th>Đơn</th><th></th></tr></thead>
+            <tbody>
+              {% for customer in recent_customers %}
+                <tr>
+                  <td><div class="crm-person"><span class="crm-avatar">{{ customer.name|first|upper }}</span><div><strong>{{ customer.name }}</strong><small>{{ customer.company|default:'—' }}</small></div></div></td>
+                  <td><span class="crm-badge crm-badge--{{ customer.segment }}">{{ customer.get_segment_display }}</span></td>
+                  <td>{{ customer.total_spent_display }}</td>
+                  <td>{{ customer.order_count }}</td>
+                  <td><a class="crm-row-action" href="{% url 'crm_admin:workspace' customer.pk %}">✦ AI</a></td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="crm-empty">Chưa có khách hàng.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="crm-panel crm-panel--ai">
+        <div class="crm-panel__head"><div><span class="crm-eyebrow">AI ACTIVITY</span><h2>Hoạt động gần đây</h2></div><a href="{% url 'wagtailsnippets_crm_aianalysislog:list' %}">Xem tất cả →</a></div>
+        <div class="crm-log-list">
+          {% for log in recent_logs %}
+            <div class="crm-log"><span class="crm-log__dot"></span><div><strong>{{ log.get_action_type_display }}</strong><small>{% if log.customer %}{{ log.customer.name }} · {% endif %}{{ log.created_at|date:'d/m/Y H:i' }}</small></div></div>
+          {% empty %}<div class="crm-empty">Chưa có hoạt động AI.</div>{% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <div class="crm-dashboard-grid">
+      <section class="crm-panel">
+        <div class="crm-panel__head"><div><span class="crm-eyebrow">SALES</span><h2>Đơn hàng gần đây</h2></div><a href="{% url 'wagtailsnippets_crm_order:list' %}">Mở danh sách →</a></div>
+        <div class="crm-order-list">
+          {% for order in recent_orders %}
+            <div class="crm-order"><div><strong>{{ order.order_code }}</strong><small>{{ order.customer.name }} · {{ order.created_at|date:'d/m/Y' }}</small></div><div><strong>{{ order.amount_display }}</strong><span class="crm-badge crm-badge--{{ order.status }}">{{ order.get_status_display }}</span></div></div>
+          {% empty %}<div class="crm-empty">Chưa có đơn hàng.</div>{% endfor %}
+        </div>
+      </section>
+
+      <section class="crm-panel crm-panel--gradient">
+        <span class="crm-eyebrow">AI WORKSPACE</span>
+        <h2>Từ dữ liệu đến hành động</h2>
+        <p>Phân tích khách hàng, tạo email và sinh báo cáo trực tiếp trong Wagtail Admin.</p>
+        <div class="crm-gradient-actions">
+          <a class="button button-light" href="{% url 'wagtailsnippets_crm_customer:list' %}">Mở CRM</a>
+          <a class="button button-light button-light--ghost" href="{% url 'crm_reports:index' %}">Xem báo cáo</a>
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

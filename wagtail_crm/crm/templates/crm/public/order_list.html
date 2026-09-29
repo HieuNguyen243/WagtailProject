@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Đơn hàng · AI CRM{% endblock %}
+{% block body_class %}crm-site{% endblock %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/crm_home.css' %}">{% endblock %}
+{% block content %}
+<header class="site-header"><div class="site-shell site-header__inner"><a class="brand" href="/"><span class="brand__mark">✦</span><span><strong>AI CRM</strong><small>Wagtail-powered customer hub</small></span></a><nav class="site-nav"><a href="/">Tổng quan</a><a href="{% url 'crm_public_customers' %}">Khách hàng</a><a class="is-active" href="{% url 'crm_public_orders' %}">Đơn hàng</a><a href="{% url 'crm_admin:dashboard' %}">Wagtail CRM</a></nav></div></header>
+<main class="site-shell page-main"><div class="section-head"><div><span class="eyebrow">SALES</span><h1>Đơn hàng</h1><p class="page-subtitle">Theo dõi trạng thái đơn hàng và giá trị giao dịch đồng bộ với Wagtail.</p></div><a class="btn btn--primary" href="{% url 'wagtailsnippets_crm_order:list' %}">Quản lý trong Wagtail →</a></div><div class="order-grid order-grid--wide">{% for order in orders %}<article class="order-card"><div class="order-top"><strong>{{ order.order_code }}</strong><span class="public-badge public-badge--{{ order.status }}">{{ order.get_status_display }}</span></div><div class="order-customer">{{ order.customer.name }}</div><div class="order-meta">{{ order.get_payment_method_display }} · {{ order.get_shipping_provider_display }}</div><div class="order-bottom"><span>{{ order.created_at|date:'d/m/Y H:i' }}</span><strong>{{ order.total_amount|floatformat:0 }} ₫</strong></div></article>{% empty %}<div class="empty-card">Chưa có đơn hàng.</div>{% endfor %}</div></main>
+{% endblock %}
