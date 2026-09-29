@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "tinyfish": {
+      "type": "http",
+      "url": "https://agent.tinyfish.ai/mcp"
+    }
+  }
+}

@@ -110,11 +110,11 @@ Sau khi đăng nhập vào trang quản trị, tìm mục **"Quản lý CRM"** t
 
 ### Cấu hình phân tích AI
 
-Trang **Phân tích AI** gửi số liệu tổng hợp, không gửi tên hoặc email khách hàng, đến API tương thích OpenAI Chat Completions. Cấu hình các biến môi trường sau trước khi chạy ứng dụng:
+Trang **Phân tích AI** gửi số liệu tổng hợp, không gửi tên hoặc email khách hàng, đến Gemini API qua endpoint tương thích OpenAI Chat Completions. Cấu hình các biến môi trường sau trước khi chạy ứng dụng:
 
-- `AI_API_KEY` — khóa API (bắt buộc).
-- `AI_API_URL` — URL API (mặc định `https://api.openai.com/v1/chat/completions`).
-- `AI_MODEL` — tên model (mặc định `gpt-4o-mini`).
+- `GEMINI_API_KEY` — Gemini API key (bắt buộc; `AI_API_KEY` vẫn được hỗ trợ làm phương án dự phòng).
+- `AI_API_URL` — URL API (mặc định `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`).
+- `AI_MODEL` — tên model (mặc định `gemini-3.8-flash`).
 
 ### Phương thức thanh toán hỗ trợ
 

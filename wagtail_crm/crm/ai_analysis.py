@@ -43,13 +43,36 @@ def build_crm_report():
     }
 
 
-def request_ai_analysis(report, prompt=""):
-    api_key = os.getenv("AI_API_KEY")
-    if not api_key:
-        raise AIAnalysisError("Chưa cấu hình AI_API_KEY trên máy chủ.")
+def _http_error_message(error):
+    try:
+        payload = json.loads(error.read().decode("utf-8"))
+        details = payload.get("error", {})
+    except (AttributeError, UnicodeDecodeError, json.JSONDecodeError):
+        details = {}
 
-    api_url = os.getenv("AI_API_URL", "https://api.openai.com/v1/chat/completions")
-    model = os.getenv("AI_MODEL", "gpt-4o-mini")
+    if not isinstance(details, dict):
+        details = {}
+
+    message = details.get("message")
+    if error.code == 429:
+        if isinstance(message, str) and message:
+            return f"Gemini giới hạn quota/tốc độ (HTTP 429): {message[:400]}"
+        return "Gemini giới hạn quota/tốc độ (HTTP 429). Hãy kiểm tra quota rồi thử lại."
+    if isinstance(message, str) and message:
+        return f"Gemini API trả về lỗi HTTP {error.code}: {message[:400]}"
+    return f"Gemini API trả về lỗi HTTP {error.code}."
+
+
+def request_ai_analysis(report, prompt=""):
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("AI_API_KEY")
+    if not api_key:
+        raise AIAnalysisError("Chưa cấu hình GEMINI_API_KEY trên máy chủ.")
+
+    api_url = os.getenv(
+        "AI_API_URL",
+        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    )
+    model = os.getenv("AI_MODEL", "gemini-3.8-flash")
     user_prompt = prompt or "Phân tích tình hình CRM và đề xuất các hành động phù hợp."
     payload = {
         "model": model,
@@ -85,7 +108,7 @@ def request_ai_analysis(report, prompt=""):
             result = json.loads(response.read().decode("utf-8"))
         content = result["choices"][0]["message"]["content"]
     except HTTPError as exc:
-        raise AIAnalysisError(f"Dịch vụ AI trả về lỗi HTTP {exc.code}.") from exc
+        raise AIAnalysisError(_http_error_message(exc)) from exc
     except (URLError, TimeoutError, OSError) as exc:
         raise AIAnalysisError("Không thể kết nối đến dịch vụ AI.") from exc
     except (KeyError, IndexError, TypeError, json.JSONDecodeError) as exc:
