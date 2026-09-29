@@ -1,0 +1,53 @@
+from django.core.exceptions import PermissionDenied
+
+from wagtail.actions.base import BaseAction
+from wagtail.log_actions import log
+
+
+class DeletePagePermissionError(PermissionDenied):
+    """
+    Raised when the page delete cannot be performed due to insufficient permissions.
+    """
+
+    pass
+
+
+class DeletePageAction(BaseAction):
+    action_name = "delete"
+    permission_error_class = DeletePagePermissionError
+
+    def __init__(self, page, user=None):
+        super().__init__(page, user=user)
+        self.page = page
+
+    def check(self, skip_permission_checks=False):
+        if (
+            self.user
+            and not skip_permission_checks
+            and not self.page.permissions_for_user(self.user).can_delete()
+        ):
+            raise DeletePagePermissionError(
+                "You do not have permission to delete this page."
+            )
+
+    def _delete_page(self, page, *args, **kwargs):
+        from wagtail.models import AbstractPage
+
+        for child in page.get_descendants().specific().iterator():
+            self.log_deletion(child)
+        self.log_deletion(page.specific)
+
+        return super(AbstractPage, page.specific).delete(*args, **kwargs)
+
+    def execute(self, *args, skip_permission_checks=False, **kwargs):
+        self.check(skip_permission_checks=skip_permission_checks)
+
+        return self._delete_page(self.page, *args, **kwargs)
+
+    def log_deletion(self, page):
+        log(
+            instance=page,
+            action="wagtail.delete",
+            user=self.user,
+            deleted=True,
+        )
