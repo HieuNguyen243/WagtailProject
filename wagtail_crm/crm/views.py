@@ -332,7 +332,7 @@ def quick_create_order_view(request, customer_id):
 def ai_models_dashboard_view(request):
     """
     Dashboard quản trị và hiển thị kết quả từ 2 mô hình Machine Learning:
-    1. Time-series Revenue Forecasting (Ridge Regression 30 ngày)
+    1. Time-series Revenue Forecasting (Ridge Regression 7 ngày / 1 tuần)
     2. Customer RFM & K-Means Clustering & Churn Risk
     Hỗ trợ nút bấm huấn luyện lại (Re-train) và xuất dữ liệu sang Apache Superset.
     """
@@ -341,7 +341,7 @@ def ai_models_dashboard_view(request):
         if res.get("success"):
             messages.success(
                 request,
-                "⚡ Đã huấn luyện và cập nhật thành công toàn bộ kết quả AI vào CSDL (Bảng RevenueForecast & CustomerSegment)!"
+                "Đã huấn luyện và cập nhật thành công toàn bộ kết quả AI vào CSDL (Bảng RevenueForecast & CustomerSegment)."
             )
         else:
             messages.warning(
@@ -394,11 +394,15 @@ def ai_models_dashboard_view(request):
         "churn_counts": [churn_counts.get("low", 0), churn_counts.get("medium", 0), churn_counts.get("high", 0)],
     }
 
+    forecast_count = forecast_qs.count()
+    avg_daily_forecast = (total_forecast_revenue / forecast_count) if forecast_count > 0 else Decimal("0")
+
     context = {
-        "page_title": "🤖 Quản trị & Trực quan hóa Mô hình AI",
+        "page_title": "Executive Revenue Intelligence & Customer Analytics",
         "forecast_qs": forecast_qs[:10],
         "total_forecast_revenue": total_forecast_revenue,
-        "forecast_count": forecast_qs.count(),
+        "avg_daily_forecast": avg_daily_forecast,
+        "forecast_count": forecast_count,
         "latest_forecast": latest_forecast,
         "segments_qs": segments_qs,
         "total_customers": total_customers,
@@ -445,7 +449,7 @@ def superset_dashboard_view(request):
     order_rows = Order.objects.count()
 
     context = {
-        "page_title": "📊 Apache Superset BI Dashboard",
+        "page_title": "Apache Superset BI Dashboard",
         "superset_url": superset_url,
         "revenue_rows": revenue_rows,
         "segment_rows": segment_rows,

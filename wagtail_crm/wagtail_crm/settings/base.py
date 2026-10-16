@@ -10,11 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = PROJECT_DIR.parent
+
+# Tự động nạp biến môi trường từ file .env (nếu có)
+load_dotenv(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -230,4 +234,7 @@ X_FRAME_OPTIONS = "SAMEORIGIN"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
 
 # URL mặc định cho Superset Dashboard (ID 11)
-SUPERSET_DASHBOARD_URL = "http://localhost:8088/superset/dashboard/11/?standalone=1"
+SUPERSET_DASHBOARD_URL = os.getenv(
+    "SUPERSET_DASHBOARD_URL",
+    "http://localhost:8088/superset/dashboard/11/?standalone=1",
+)

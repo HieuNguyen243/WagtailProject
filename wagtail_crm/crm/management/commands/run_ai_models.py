@@ -2,7 +2,7 @@
 """
 Django Management Command: python manage.py run_ai_models
 Kích hoạt toàn bộ pipeline AI:
-1. Huấn luyện mô hình chuỗi thời gian Ridge Regression để dự báo doanh thu 30 ngày tiếp theo.
+1. Huấn luyện mô hình chuỗi thời gian Ridge Regression để dự báo doanh thu 7 ngày (1 tuần) tiếp theo.
 2. Phân khúc khách hàng tự động theo chuẩn RFM + K-Means Clustering và dự đoán rủi ro rời bỏ (Churn Risk).
 3. Lưu toàn bộ kết quả vào CSDL bảng RevenueForecast và CustomerSegment phục vụ trực quan hóa trên Apache Superset / Wagtail.
 """
@@ -25,8 +25,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--days",
             type=int,
-            default=30,
-            help="Số ngày tương lai cần dự báo doanh thu (mặc định: 30 ngày)",
+            default=7,
+            help="Số ngày tương lai cần dự báo doanh thu (mặc định: 7 ngày / 1 tuần)",
         )
         parser.add_argument(
             "--clusters",
@@ -36,7 +36,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        days = options.get("days", 30)
+        days = options.get("days", 7)
         clusters = options.get("clusters", 4)
 
         self.stdout.write(self.style.NOTICE("=================================================="))

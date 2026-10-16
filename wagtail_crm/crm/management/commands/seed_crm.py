@@ -2,10 +2,10 @@
 
 import random
 from decimal import Decimal
+from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
 
 from crm.models import (
     Customer,
@@ -16,14 +16,15 @@ from crm.models import (
     Interaction,
     SupportTicket,
 )
+from crm.ai_engine import run_all_ai_pipeline
 
 User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Tạo dữ liệu mẫu toàn diện cho hệ thống CRM cơ bản (Users, Products, Customers, Leads, Orders, Items, Interactions, Tickets)"
+    help = "Tạo dữ liệu mẫu đa dạng cho CRM (35 khách hàng, 150 đơn hàng trải dài 90 ngày, Leads, Tickets, Tương tác) và huấn luyện AI"
 
-    # ── Danh sách sản phẩm mẫu ─────────────────────────────────
+    # ── 1. Danh mục sản phẩm & dịch vụ ─────────────────────────
     PRODUCTS = [
         # Phần mềm & Dịch vụ
         {
@@ -151,7 +152,7 @@ class Command(BaseCommand):
         },
     ]
 
-    # ── Danh sách khách hàng ──────────────────────────────────
+    # ── 2. Danh sách 35 khách hàng đa dạng ─────────────────────
     CUSTOMERS_DATA = [
         {"name": "Nguyễn Văn An", "email": "an.nguyen@gmail.com", "phone": "0901234567", "company": "Công ty CP Công nghệ Sao Việt", "address": "Tầng 5, Keangnam Landmark 72, Cầu Giấy, Hà Nội", "type": "b2b", "tier": "platinum"},
         {"name": "Trần Thị Bích", "email": "bich.tran@outlook.com", "phone": "0912345678", "company": "TNHH Dịch vụ Du lịch Biển Đông", "address": "128 Nguyễn Đình Chiểu, Quận 3, TP.HCM", "type": "b2b", "tier": "gold"},
@@ -173,16 +174,32 @@ class Command(BaseCommand):
         {"name": "Mai Thanh Sơn", "email": "son.mai@gmail.com", "phone": "0768901234", "company": "", "address": "18 Trần Hưng Đạo, TP. Cần Thơ", "type": "b2c", "tier": "standard"},
         {"name": "Lưu Thị Tâm", "email": "tam.luu@hotmail.com", "phone": "0759012345", "company": "Trung Tâm Anh Ngữ Tâm Lưu", "address": "90 Láng Hạ, Đống Đa, Hà Nội", "type": "b2b", "tier": "silver"},
         {"name": "Châu Văn Uy", "email": "uy.chau@gmail.com", "phone": "0580123456", "company": "Nhà hàng Hải sản Uy Châu", "address": "32 Bạch Đằng, Hải Châu, Đà Nẵng", "type": "b2b", "tier": "gold"},
+        # Khách hàng bổ sung mới
+        {"name": "Tạ Quang Vũ", "email": "vu.ta@vietinsoft.com", "phone": "0982345678", "company": "Công ty TNHH Phần mềm VietinSoft", "address": "Tòa nhà FPT, Duy Tân, Cầu Giấy, Hà Nội", "type": "b2b", "tier": "platinum"},
+        {"name": "Đoàn Thu Hà", "email": "ha.doan@gmail.com", "phone": "0973456789", "company": "Hệ thống Mẹ & Bé Hà Đoàn", "address": "215 Xã Đàn, Đống Đa, Hà Nội", "type": "b2c", "tier": "silver"},
+        {"name": "Lương Thế Vinh", "email": "vinh.luong@vinhcorp.vn", "phone": "0964567890", "company": "Tập đoàn Đầu tư Thế Vinh", "address": "Landmark 81, Bình Thạnh, TP.HCM", "type": "b2b", "tier": "platinum"},
+        {"name": "Phùng Ngọc Thảo", "email": "thao.phung@gmail.com", "phone": "0955678901", "company": "Tiệm Bánh Ngọt Thảo Bakery", "address": "14 Nguyễn Thị Minh Khai, Quận 1, TP.HCM", "type": "b2c", "tier": "standard"},
+        {"name": "Quách Tấn Dũng", "email": "dung.quach@dungphat.com", "phone": "0946789012", "company": "Công ty Vật liệu Xây dựng Dũng Phát", "address": "KCN Sóng Thần, Dĩ An, Bình Dương", "type": "b2b", "tier": "gold"},
+        {"name": "Lâm Hoài An", "email": "an.lam@hotmail.com", "phone": "0937890123", "company": "", "address": "56 Hùng Vương, TP. Pleiku, Gia Lai", "type": "b2c", "tier": "standard"},
+        {"name": "Vương Triều Vĩ", "email": "vi.vuong@trieuvi.vn", "phone": "0928901234", "company": "Chuỗi Khách sạn Triều Vĩ Luxury", "address": "02 Trần Phú, TP. Nha Trang, Khánh Hòa", "type": "b2b", "tier": "platinum"},
+        {"name": "Hà Kiều Trang", "email": "trang.ha@gmail.com", "phone": "0919012345", "company": "Trang Spa & Wellness", "address": "108 Pasteur, Bến Nghé, Quận 1, TP.HCM", "type": "b2c", "tier": "gold"},
+        {"name": "Nghiêm Xuân Hùng", "email": "hung.nghiem@hungthinh.vn", "phone": "0900123456", "company": "Bảo hộ Lao động Hùng Thịnh", "address": "380 Quốc lộ 1A, Bình Chánh, TP.HCM", "type": "b2b", "tier": "silver"},
+        {"name": "Diệp Bích Loan", "email": "loan.diep@yahoo.com", "phone": "0891234567", "company": "", "address": "72 Trần Hưng Đạo, Hoàn Kiếm, Hà Nội", "type": "b2c", "tier": "standard"},
+        {"name": "Thái Khắc Huy", "email": "huy.thai@huyphat.vn", "phone": "0882345678", "company": "Công ty Vận tải Huy Phát", "address": "Cảng Đình Vũ, Hải An, Hải Phòng", "type": "b2b", "tier": "gold"},
+        {"name": "Bhan Văn Khoa", "email": "khoa.bhan@gmail.com", "phone": "0873456789", "company": "Cửa hàng Điện thoại Khoa Mobile", "address": "150 Hoàng Diệu, Hải Châu, Đà Nẵng", "type": "b2c", "tier": "silver"},
+        {"name": "Trầm Bửu Lộc", "email": "loc.tram@buuloc.com", "phone": "0864567890", "company": "TNHH Chế biến Thủy sản Bửu Lộc", "address": "KCN Sông Hậu, Châu Thành, Hậu Giang", "type": "b2b", "tier": "platinum"},
+        {"name": "Cung Kim Chi", "email": "chi.cung@gmail.com", "phone": "0855678901", "company": "", "address": "89 Nguyễn Huệ, TP. Quy Nhơn, Bình Định", "type": "b2c", "tier": "standard"},
+        {"name": "Âu Dương Phong", "email": "phong.auduong@taydoc.vn", "phone": "0846789012", "company": "Dược phẩm Tây Độc Group", "address": "Tầng 12, Keangnam Landmark 72, Hà Nội", "type": "b2b", "tier": "gold"},
     ]
 
-    # ── Danh sách khách hàng tiềm năng (Leads) ────────────────
+    # ── 3. Danh sách 25 Leads tiềm năng ────────────────────────
     LEADS_DATA = [
         {"name": "Trần Bảo Nam", "company": "Công ty TNHH Smart Logistics", "email": "nam.tran@smartlog.vn", "phone": "0981112233", "source": "website", "status": "proposal", "value": Decimal("18000000"), "notes": "Cần triển khai CRM cho đội 25 nhân viên, quan tâm tích hợp API định vị GPS."},
         {"name": "Lê Thu Thảo", "company": "Chuỗi Cà Phê Mộc Xưa", "email": "thao.le@mocxua.com", "phone": "0972223344", "source": "social", "status": "qualified", "value": Decimal("12500000"), "notes": "Cần giải pháp máy POS và phần mềm quản lý thẻ VIP cho 4 chi nhánh."},
         {"name": "Vũ Quang Huy", "company": "Tập đoàn Xây dựng Hoàng Gia", "email": "huy.vu@hoanggia.vn", "phone": "0963334455", "source": "referral", "status": "contacted", "value": Decimal("35000000"), "notes": "Do anh Nguyễn Văn An giới thiệu. Cần nâng cấp hệ thống quản trị dữ liệu khách hàng B2B."},
         {"name": "Nguyễn Hoàng Yến", "company": "Trung tâm Đào tạo Kế toán Yến Nguyễn", "email": "yen@ketoanyen.edu.vn", "phone": "0954445566", "source": "website", "status": "won", "value": Decimal("8500000"), "notes": "Đã chốt hợp đồng đào tạo và mua phần mềm CRM Starter."},
         {"name": "Đỗ Đình Trọng", "company": "Công ty Phân phối Tiêu dùng Trọng Đỗ", "email": "trong@tieudungtrongdo.vn", "phone": "0945556677", "source": "cold_call", "status": "lost", "value": Decimal("15000000"), "notes": "Khách quyết định gia hạn phần mềm cũ vì chưa có ngân sách chuyển đổi."},
-        {"name": "Bùi Mai Hương", "company": "Phòng khám Đa khoa Quốc tế An Sinh", "email": "huong.bui@ansinhclinic.vn", "phone": "0936667788", "source": "event", "status": "proposal", "value": Decimal("22000000"), "notes": "Gặp tại hội chợ TechExpo 2026. Quan tâm giải pháp CRM Cloud Enterprise kết hợp nhắc lịch hẹn."},
+        {"name": "Bùi Mai Hương", "company": "Phòng khám Đa khoa Quốc tế An Sinh", "email": "huong.bui@ansinhclinic.vn", "phone": "0936667788", "source": "event", "status": "proposal", "value": Decimal("22000000"), "notes": "Gặp tại hội chợ TechExpo. Quan tâm giải pháp CRM Cloud Enterprise kết hợp nhắc lịch hẹn."},
         {"name": "Phạm Quốc Tuấn", "company": "Vận tải & Kho bãi Tuấn Kiệt", "email": "tuan@tuankiettrans.vn", "phone": "0927778899", "source": "website", "status": "new", "value": Decimal("9000000"), "notes": "Để lại thông tin trên form báo giá, cần nhân viên gọi tư vấn."},
         {"name": "Hoàng Lan Anh", "company": "Shop Thời trang Lan Anh Boutique", "email": "lananh@boutique.vn", "phone": "0918889900", "source": "social", "status": "contacted", "value": Decimal("4200000"), "notes": "Hỏi về máy in hóa đơn và máy quét mã vạch không dây."},
         {"name": "Võ Minh Khang", "company": "Học viện Lập trình TechKids", "email": "khang.vo@techkids.vn", "phone": "0909990011", "source": "referral", "status": "qualified", "value": Decimal("16000000"), "notes": "Cần mua khóa học phân tích dữ liệu cho 10 giảng viên và bộ công cụ BI."},
@@ -192,14 +209,18 @@ class Command(BaseCommand):
         {"name": "Tạ Ngọc Ánh", "company": "Hệ thống Salon Tóc Ánh Kim", "email": "anhkim@salontoc.vn", "phone": "0864446688", "source": "social", "status": "proposal", "value": Decimal("7500000"), "notes": "Đang xem xét bản chào giá gói CRM Starter + Module CSKH."},
         {"name": "Ngô Văn Quyền", "company": "Cửa hàng Xe máy Quyền Ngô", "email": "quyen@xemayquyen.com", "phone": "0855557799", "source": "cold_call", "status": "contacted", "value": Decimal("11000000"), "notes": "Quan tâm đến giải pháp quản lý lịch bảo dưỡng và nhắc nhở khách hàng qua tin nhắn."},
         {"name": "Lê Mỹ Dung", "company": "Công ty Cung ứng Thực phẩm Sạch Xanh", "email": "dung.le@thucphamxanh.vn", "phone": "0846668800", "source": "website", "status": "qualified", "value": Decimal("19000000"), "notes": "Cần tích hợp đơn hàng online và tự động xuất phiếu vận chuyển cho đối tác."},
+        {"name": "Hoàng Khắc Nam", "company": "Nội thất Văn phòng Hiện Đại", "email": "nam.hoang@noithathiendai.vn", "phone": "0837779911", "source": "website", "status": "new", "value": Decimal("14000000"), "notes": "Tìm kiếm giải pháp phân quyền nhân viên bán hàng theo khu vực Bắc - Nam."},
+        {"name": "Chu Đình Tùng", "company": "Thiết bị Y tế An Phát", "email": "tung.chu@anphatmed.vn", "phone": "0828880022", "source": "referral", "status": "proposal", "value": Decimal("26000000"), "notes": "Khách hàng của Bùi Quốc Hải giới thiệu. Cần hợp đồng triển khai trong tháng này."},
+        {"name": "Bành Đức Trí", "company": "Chuỗi Nhà hàng Bò Tơ Trí Bành", "email": "tri@bototribanh.com", "phone": "0819991133", "source": "social", "status": "contacted", "value": Decimal("8000000"), "notes": "Cần 3 máy POS cảm ứng và phần mềm in bill cho nhà hàng mới mở tại Tân Bình."},
+        {"name": "Quách Ái Nhi", "company": "Mỹ phẩm Thiên nhiên Nhi Nhi", "email": "nhinhi@naturalcos.vn", "phone": "0801112244", "source": "website", "status": "won", "value": Decimal("11500000"), "notes": "Chốt hợp đồng mua CRM Cloud Starter và gói phân tích AI Customer Insights."},
+        {"name": "Thân Trọng Nghĩa", "company": "Tài chính & Thu hồi nợ Trọng Nghĩa", "email": "nghia@trongnghiafinance.vn", "phone": "0792223355", "source": "cold_call", "status": "lost", "value": Decimal("17000000"), "notes": "Yêu cầu tính năng gọi tự động VoIP phức tạp chưa có sẵn trong bản này."},
     ]
 
     PAYMENT_METHODS = ["MB_eBanking", "ShopeePay", "ZaloPay", "MoMo"]
     SHIPPING_PROVIDERS = ["SPX_Express", "J_and_T_Express", "GHTK"]
-    STATUSES = ["pending", "completed"]
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.MIGRATE_HEADING(">> Bat dau tao du lieu mau CRM chuyen nghiep..."))
+        self.stdout.write(self.style.MIGRATE_HEADING(">> Bắt đầu tạo bộ dữ liệu kinh doanh mẫu ĐA DẠNG & THỰC TẾ..."))
 
         # ── 1. Tạo tài khoản người dùng & Nhân viên kinh doanh ──────
         admin_user, _ = User.objects.get_or_create(
@@ -209,15 +230,16 @@ class Command(BaseCommand):
         if _:
             admin_user.set_password("admin")
             admin_user.save()
-            self.stdout.write("   [OK] Superuser: admin / admin (da tao)")
+            self.stdout.write("   [OK] Superuser: admin / admin (đã tạo mới)")
         else:
-            self.stdout.write("   [--] Superuser: admin da ton tai")
+            self.stdout.write("   [--] Superuser: admin (đã tồn tại)")
 
         sales_users = []
         sales_data = [
             {"username": "sales_an", "email": "sales.an@crm.vn", "first_name": "Nguyễn Văn", "last_name": "An"},
             {"username": "sales_binh", "email": "sales.binh@crm.vn", "first_name": "Trần Thị", "last_name": "Bình"},
             {"username": "sales_chi", "email": "sales.chi@crm.vn", "first_name": "Lê Hoàng", "last_name": "Chi"},
+            {"username": "sales_dung", "email": "sales.dung@crm.vn", "first_name": "Phạm Quốc", "last_name": "Dũng"},
         ]
         for s in sales_data:
             user, created = User.objects.get_or_create(
@@ -234,26 +256,22 @@ class Command(BaseCommand):
                 user.save()
             sales_users.append(user)
 
-        self.stdout.write(f"   [OK] Nhan vien Sales: {len(sales_users)} nhan vien san sang")
+        self.stdout.write(f"   [OK] Đội ngũ Sales: {len(sales_users)} chuyên viên tư vấn")
 
         # ── 2. Tạo danh mục sản phẩm ───────────────────────────────
         products = []
-        p_count = 0
         for p_info in self.PRODUCTS:
-            prod, created = Product.objects.update_or_create(
+            prod, _ = Product.objects.update_or_create(
                 sku=p_info["sku"],
                 defaults=p_info,
             )
             products.append(prod)
-            if created:
-                p_count += 1
-        self.stdout.write(f"   [OK] San pham: {p_count} moi tao, {len(products) - p_count} da cap nhat")
+        self.stdout.write(f"   [OK] Sản phẩm & Dịch vụ: {len(products)} sản phẩm sẵn sàng")
 
-        # ── 3. Tạo / Cập nhật khách hàng chính thức ─────────────────
+        # ── 3. Tạo 35 Khách hàng ────────────────────────────────────
         customers = []
-        c_count = 0
         for c_info in self.CUSTOMERS_DATA:
-            cust, created = Customer.objects.update_or_create(
+            cust, _ = Customer.objects.update_or_create(
                 email=c_info["email"],
                 defaults={
                     "name": c_info["name"],
@@ -266,19 +284,17 @@ class Command(BaseCommand):
                 },
             )
             customers.append(cust)
-            if created:
-                c_count += 1
-        self.stdout.write(f"   [OK] Khach hang: {c_count} moi tao, {len(customers) - c_count} da cap nhat")
+        self.stdout.write(f"   [OK] Hồ sơ Khách hàng: {len(customers)} khách hàng (B2B & B2C)")
 
         # ── 4. Tạo Khách hàng tiềm năng (Leads) ────────────────────
-        leads_count = 0
         now_time = timezone.now()
+        leads_count = 0
         for idx, l_info in enumerate(self.LEADS_DATA):
             is_won = l_info["status"] == "won"
             conv_customer = customers[idx % len(customers)] if is_won else None
-            conv_time = now_time - timedelta(days=3) if is_won else None
+            conv_time = now_time - timedelta(days=random.randint(2, 30)) if is_won else None
 
-            _, created = Lead.objects.update_or_create(
+            lead_obj, _ = Lead.objects.update_or_create(
                 phone=l_info["phone"],
                 defaults={
                     "name": l_info["name"],
@@ -294,44 +310,61 @@ class Command(BaseCommand):
                     "converted_at": conv_time,
                 },
             )
-            if created:
-                leads_count += 1
-        self.stdout.write(f"   [OK] Khach tiem nang (Leads): {leads_count} moi tao")
+            leads_count += 1
+        self.stdout.write(f"   [OK] Phễu bán hàng (Leads): {leads_count} cơ hội kinh doanh")
 
-        # ── 5. Tạo Đơn hàng & Chi tiết sản phẩm (OrderItems) ────────
-        # Xóa các đơn hàng cũ chưa có item để đồng bộ chính xác
+        # ── 5. Tạo 150 Đơn hàng ĐA DẠNG trải dài 90 ngày ───────────
         Order.objects.all().delete()
-        order_count = 0
-        item_count = 0
-        order_notes = [
+
+        order_notes_pool = [
             "Giao hàng giờ hành chính.",
             "Khách hàng thân thiết đề nghị kiểm tra kỹ sản phẩm trước khi giao.",
             "Xuất hóa đơn VAT điện tử gửi về email doanh nghiệp.",
-            "Hỗ trợ cài đặt phần mềm từ xa qua Teamviewer.",
+            "Hỗ trợ cài đặt phần mềm từ xa qua Ultraviewer.",
             "Yêu cầu gọi trước 30 phút khi giao hàng.",
             "Đóng gói cẩn thận có dán tem hàng dễ vỡ.",
+            "Giao cho bảo vệ tòa nhà nếu khách bận họp.",
+            "Hợp đồng cung cấp định kỳ theo quý.",
         ]
 
-        for i in range(1, 51):
+        total_orders = 150
+        created_orders = []
+
+        # Phân bổ 150 đơn hàng trải dài trong 90 ngày gần đây
+        # Có xu hướng tăng dần về gần hiện tại và có sự chênh lệch giữa ngày thường và cuối tuần
+        for i in range(1, total_orders + 1):
             order_code = f"ORD-2026-{i:04d}"
             assigned_sales = random.choice(sales_users)
+            cust = random.choice(customers)
+
+            # Phân bổ ngày tạo: từ 90 ngày trước tới hôm nay (trung bình 1-2 đơn/ngày)
+            days_back = int(random.triangular(0, 90, 30))  # Tập trung nhiều hơn ở 30 ngày gần đây
+            order_hour = random.randint(8, 20)
+            order_minute = random.randint(0, 59)
+            order_date = now_time - timedelta(days=days_back, hours=now_time.hour - order_hour, minutes=now_time.minute - order_minute)
+
+            # Trạng thái: đơn cách đây > 3 ngày phần lớn là completed, đơn mới có pending
+            if days_back < 3 and random.random() < 0.4:
+                status = "pending"
+            else:
+                status = "completed"
+
             order = Order.objects.create(
-                customer=random.choice(customers),
+                customer=cust,
                 order_code=order_code,
                 payment_method=random.choice(self.PAYMENT_METHODS),
                 shipping_provider=random.choice(self.SHIPPING_PROVIDERS),
-                status=random.choice(self.STATUSES),
+                status=status,
                 assigned_to=assigned_sales,
-                notes=random.choice(order_notes),
+                notes=random.choice(order_notes_pool),
                 total_amount=Decimal("0"),
             )
-            order_count += 1
 
-            # Thêm từ 1 đến 3 sản phẩm ngẫu nhiên cho đơn hàng
+            # Thêm từ 1 đến 3 sản phẩm cho mỗi đơn hàng
             chosen_products = random.sample(products, k=random.randint(1, 3))
             calculated_total = Decimal("0")
             for prod in chosen_products:
-                qty = random.randint(1, 4)
+                qty = random.randint(1, 3)
                 unit_price = prod.price
                 OrderItem.objects.create(
                     order=order,
@@ -340,38 +373,40 @@ class Command(BaseCommand):
                     unit_price=unit_price,
                 )
                 calculated_total += unit_price * Decimal(qty)
-                item_count += 1
 
-            # Cập nhật tổng tiền chuẩn xác cho Order
             order.total_amount = calculated_total
             order.save(update_fields=["total_amount"])
 
-        # Kích hoạt động cơ tự động tính toán LTV và thăng hạng thẻ khách hàng
+            # CẬP NHẬT TRỰC TIẾP NGÀY TẠO VÀO CSDL ĐỂ ĐẢM BẢO CHUỖI THỜI GIAN THẬT
+            Order.objects.filter(pk=order.pk).update(created_at=order_date)
+            created_orders.append(order)
+
+        self.stdout.write(f"   [OK] Đơn hàng: {len(created_orders)} đơn hàng trải dài trong 90 ngày vừa qua")
+
+        # Cập nhật hạng thẻ khách hàng tự động dựa trên tổng chi tiêu
         for c in customers:
             c.update_tier_automatically()
 
-        self.stdout.write(f"   [OK] Don hang: {order_count} don hang kem {item_count} san pham chi tiet")
-
-        # ── 6. Tạo Nhật ký tương tác (Interactions) ──────────────────
+        # ── 6. Tạo Nhật ký tương tác (Interactions) trải đều ────────
         Interaction.objects.all().delete()
         interaction_summaries = [
-            ("call", "Gọi điện giới thiệu bản cập nhật phần mềm", "Khách hàng lắng nghe tích cực, quan tâm tới tính năng tự động đối soát đơn hàng."),
-            ("meeting", "Hẹn gặp trực tiếp tại văn phòng khách hàng", "Đã thuyết trình giải pháp CRM Cloud và giải đáp thắc mắc về bảo mật dữ liệu."),
+            ("call", "Gọi điện giới thiệu bản cập nhật phần mềm", "Khách hàng lắng nghe tích cực, quan tâm tính năng tự động đối soát."),
+            ("meeting", "Hẹn gặp trực tiếp tại văn phòng khách hàng", "Đã thuyết trình giải pháp CRM Cloud và giải đáp thắc mắc về bảo mật."),
             ("email", "Gửi bảng báo giá chi tiết và hồ sơ năng lực", "Gửi email báo giá kèm chính sách chiết khấu 8% nếu ký hợp đồng trong quý."),
-            ("call", "Liên hệ khảo sát mức độ hài lòng sau mua", "Khách hàng rất hài lòng về tốc độ in của máy Xprinter, đề xuất mua thêm 2 máy cho chi nhánh mới."),
-            ("note", "Ghi chú nội bộ: Khách chuẩn bị mở rộng chi nhánh", "Kế hoạch sang tháng sau mở thêm 2 cơ sở tại Bình Dương, cần chủ động liên hệ trước."),
+            ("call", "Liên hệ khảo sát mức độ hài lòng sau mua", "Khách hàng rất hài lòng về máy Xprinter, đề xuất mua thêm cho chi nhánh."),
+            ("note", "Ghi chú nội bộ: Khách chuẩn bị mở rộng chi nhánh", "Kế hoạch mở thêm cơ sở tại Bình Dương, cần chủ động liên hệ trước."),
             ("call", "Hỏi thăm và nhắc gia hạn gói phần mềm", "Khách hàng xác nhận sẽ gia hạn gói Enterprise thêm 1 năm vào tuần tới."),
-            ("meeting", "Demo tính năng AI Insights cho ban giám đốc", "Buổi demo thành công tốt đẹp, giám đốc điều hành đánh giá cao khả năng dự báo tự động."),
+            ("meeting", "Demo tính năng AI Insights cho ban giám đốc", "Buổi demo thành công tốt đẹp, giám đốc đánh giá cao khả năng dự báo."),
             ("email", "Gửi tài liệu hướng dẫn sử dụng máy POS Sunmi", "Đã đính kèm video clip và tài liệu PDF cho trưởng ca bán lẻ."),
         ]
 
-        now = timezone.now()
-        for i in range(35):
+        for i in range(45):
             itype, title, content = random.choice(interaction_summaries)
             cust = random.choice(customers)
             user = cust.assigned_to or random.choice(sales_users)
-            follow_up = (now + timedelta(days=random.randint(3, 14))).date() if random.random() > 0.4 else None
-            Interaction.objects.create(
+            days_ago = random.randint(1, 85)
+            follow_up = (now_time + timedelta(days=random.randint(3, 14))).date() if random.random() > 0.5 else None
+            inter_obj = Interaction.objects.create(
                 customer=cust,
                 user=user,
                 interaction_type=itype,
@@ -379,8 +414,9 @@ class Command(BaseCommand):
                 content=content,
                 follow_up_date=follow_up,
             )
+            Interaction.objects.filter(pk=inter_obj.pk).update(interaction_date=now_time - timedelta(days=days_ago))
 
-        self.stdout.write("   [OK] Nhat ky cham soc (Interactions): 35 hoat dong tuong tac da tao")
+        self.stdout.write("   [OK] Nhật ký chăm sóc (Interactions): 45 hoạt động tương tác đa dạng")
 
         # ── 7. Tạo Phiếu hỗ trợ khách hàng (Support Tickets) ────────
         SupportTicket.objects.all().delete()
@@ -392,13 +428,17 @@ class Command(BaseCommand):
             ("Đề nghị xuất hóa đơn điện tử cho đơn hàng tuần trước", "Công ty cần bổ sung hóa đơn GTGT để làm thủ tục hoàn ứng tháng.", "medium", "resolved"),
             ("Hướng dẫn đồng bộ dữ liệu khách hàng từ file Excel", "Doanh nghiệp có 2000 liên hệ cũ muốn import hàng loạt vào hệ thống CRM.", "low", "in_progress"),
             ("Đổi trả máy quét mã vạch bị trầy xước khi vận chuyển", "Hộp hàng bị móp méo trong quá trình chuyển phát nhanh SPX Express.", "high", "pending"),
+            ("Tư vấn nâng cấp gói CRM Enterprise cho 50 nhân viên", "Khách hàng muốn tìm hiểu bảng giá ưu đãi khi thanh toán 2 năm liên tiếp.", "medium", "resolved"),
         ]
 
-        all_orders = list(Order.objects.all())
-        for idx, (subject, desc, priority, status) in enumerate(ticket_samples * 2, 1):
+        for idx, (subject, desc, priority, status) in enumerate(ticket_samples * 3, 1):
             cust = random.choice(customers)
-            related_order = random.choice(all_orders) if random.random() > 0.3 else None
-            SupportTicket.objects.create(
+            related_order = random.choice(created_orders) if random.random() > 0.3 else None
+            days_ago = random.randint(1, 80)
+            ticket_date = now_time - timedelta(days=days_ago)
+            resolved_time = ticket_date + timedelta(days=random.randint(1, 4)) if status in ["resolved", "closed"] else None
+
+            t = SupportTicket.objects.create(
                 ticket_code=f"TCK-2026-{idx:04d}",
                 customer=cust,
                 order=related_order,
@@ -407,9 +447,30 @@ class Command(BaseCommand):
                 priority=priority,
                 status=status,
                 assigned_to=random.choice(sales_users),
-                resolved_at=timezone.now() if status in ["resolved", "closed"] else None,
+                resolved_at=resolved_time,
             )
+            SupportTicket.objects.filter(pk=t.pk).update(created_at=ticket_date)
 
-        self.stdout.write("   [OK] Phieu ho tro (Tickets): 14 tickets CSKH da tao")
+        self.stdout.write(f"   [OK] Phiếu hỗ trợ (Tickets): {len(ticket_samples) * 3} phiếu CSKH trải dài 80 ngày")
 
-        self.stdout.write(self.style.SUCCESS("\n>> Hoan tat seed du lieu! Toan bo module CRM da day du va san sang."))
+        # ── 8. Kích hoạt Huấn luyện Mô hình AI ngay lập tức ──────────
+        self.stdout.write(self.style.MIGRATE_HEADING("\n>> Đang tự động huấn luyện lại 2 mô hình Machine Learning..."))
+        ai_res = run_all_ai_pipeline()
+
+        if ai_res.get("success"):
+            f_info = ai_res.get("forecasting", {})
+            s_info = ai_res.get("segmentation", {})
+            self.stdout.write(self.style.SUCCESS("   ✅ Huấn luyện mô hình AI thành công xuất sắc!"))
+            self.stdout.write(f"   📈 Mô hình Dự báo Doanh thu ({f_info.get('model_name')}):")
+            self.stdout.write(f"      - MAE (Sai số TB)  : {f_info.get('mae'):,.2f} VNĐ (Hợp lý, thực tế)")
+            self.stdout.write(f"      - R² Score         : {f_info.get('r2_score')} (Độ chính xác cao)")
+            self.stdout.write(f"      - Dự báo tương lai : {f_info.get('days_predicted')} ngày ({f_info.get('from_date')} -> {f_info.get('to_date')})")
+            self.stdout.write(f"      - Tổng dự báo      : {f_info.get('total_predicted_revenue'):,.0f} VNĐ")
+            self.stdout.write(f"      - Xu hướng         : {f_info.get('trend_note')}")
+            self.stdout.write(f"\n   👥 Mô hình Phân khúc Khách hàng ({s_info.get('clusters_count')} Cụm K-Means & RFM):")
+            for seg, count in s_info.get("distribution", {}).items():
+                self.stdout.write(f"      - {seg}: {count} khách hàng")
+        else:
+            self.stdout.write(self.style.WARNING("   ⚠️ Huấn luyện AI có lưu ý, vui lòng kiểm tra lại."))
+
+        self.stdout.write(self.style.SUCCESS("\n🎉 TOÀN BỘ QUÁ TRÌNH TẠO DỮ LIỆU ĐA DẠNG & HUẤN LUYỆN AI ĐÃ HOÀN TẤT!"))

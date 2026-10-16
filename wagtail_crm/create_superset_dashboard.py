@@ -375,11 +375,11 @@ def create_all_charts(datasets):
         chart_ids.append(c5)
 
     # ─────────────────────────────────────────────────────────────
-    # CHART 6 (AI): Dự báo Doanh thu 30 ngày (Line + Confidence)
+    # CHART 6 (AI): Dự báo Doanh thu 7 ngày (Line + Confidence)
     # ─────────────────────────────────────────────────────────────
-    log("  📊 [6/7] 🤖 Dự Báo Doanh Thu 30 Ngày (Ridge Regression + CI 95%)", "STEP")
+    log("  📊 [6/7] 🤖 Dự Báo Doanh Thu 7 Ngày Tới (Ridge Regression + CI 95%)", "STEP")
     c6 = create_chart(
-        name="🤖 Dự Báo Doanh Thu 30 Ngày Tới (AI Ridge Regression)",
+        name="🤖 Dự Báo Doanh Thu 7 Ngày Tới (AI Ridge Regression)",
         viz_type="echarts_area",
         datasource_id=datasets["crm_revenueforecast"],
         params_dict={

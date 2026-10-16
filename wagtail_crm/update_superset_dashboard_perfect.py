@@ -13,7 +13,7 @@
     4. Top Sản Phẩm & Danh Mục Doanh Thu Cao Nhất (Treemap)
     5. Phân Bổ Phiếu Hỗ Trợ Khách Hàng Theo Mức Độ & Trạng Thái (Stacked Bar)
 - 2 Biểu đồ kết quả Mô Hình AI:
-    6. [AI] Dự Báo Doanh Thu 30 Ngày Tới (Ridge Regression + Confidence Interval) (Area)
+    6. [AI] Dự Báo Doanh Thu 7 Ngày Tới (Ridge Regression + Confidence Interval) (Area)
     7. [AI] Phân Khúc Khách Hàng RFM & Đánh Giá Nguy Cơ Rời Bỏ (K-Means Clustering) (Bubble)
 ==========================================================================
 """
@@ -247,7 +247,7 @@ CHARTS_CONFIG = [
     },
     {
         "id": 130,
-        "name": "🤖 [AI] Dự Báo Doanh Thu 30 Ngày Tới (Ridge Regression + KTC 95%)",
+        "name": "🤖 [AI] Dự Báo Doanh Thu 7 Ngày Tới (Ridge Regression + KTC 95%)",
         "viz_type": "echarts_area",
         "datasource_id": 26,
         "params": {
