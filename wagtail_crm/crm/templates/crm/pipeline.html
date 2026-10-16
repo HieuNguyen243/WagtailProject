@@ -1,0 +1,596 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n humanize %}
+
+{% block titletag %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --crm-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        --crm-mono: 'JetBrains Mono', monospace;
+        --crm-bg: #f8fafc;
+        --crm-surface: #ffffff;
+        --crm-border: #e2e8f0;
+        --crm-primary: #4f46e5;
+        --crm-text-strong: #0f172a;
+        --crm-text-body: #334155;
+        --crm-text-muted: #64748b;
+        --crm-radius: 12px;
+        --crm-shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+    }
+
+    .pipeline-wrapper {
+        font-family: var(--crm-font);
+        background: var(--crm-bg);
+        min-height: calc(100vh - 80px);
+        padding: 24px 32px 64px;
+        color: var(--crm-text-body);
+    }
+
+    /* ── Header & Toolbar ── */
+    .pipeline-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .pipeline-title-group h1 {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--crm-text-strong);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pipeline-title-group p {
+        margin: 4px 0 0;
+        font-size: 13.5px;
+        color: var(--crm-text-muted);
+    }
+
+    .pipeline-kpis {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .kpi-pill {
+        background: var(--crm-surface);
+        border: 1px solid var(--crm-border);
+        border-radius: 10px;
+        padding: 8px 16px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .kpi-pill .kpi-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--crm-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .kpi-pill .kpi-val {
+        font-size: 17px;
+        font-weight: 700;
+        color: var(--crm-primary);
+        font-family: var(--crm-mono);
+    }
+
+    /* ── Filter Bar ── */
+    .filter-bar {
+        background: var(--crm-surface);
+        border: 1px solid var(--crm-border);
+        border-radius: var(--crm-radius);
+        padding: 14px 20px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .filter-input {
+        padding: 8px 14px;
+        border: 1px solid var(--crm-border);
+        border-radius: 8px;
+        font-size: 13.5px;
+        outline: none;
+        background: #f8fafc;
+        min-width: 220px;
+    }
+
+    .filter-input:focus {
+        border-color: var(--crm-primary);
+        background: #fff;
+    }
+
+    .filter-select {
+        padding: 8px 14px;
+        border: 1px solid var(--crm-border);
+        border-radius: 8px;
+        font-size: 13.5px;
+        outline: none;
+        background: #fff;
+    }
+
+    .btn-create-lead {
+        background: var(--crm-primary);
+        color: #fff !important;
+        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13.5px;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+        transition: all 0.2s;
+    }
+
+    .btn-create-lead:hover {
+        background: #4338ca;
+        transform: translateY(-1px);
+    }
+
+    /* ── Kanban Grid ── */
+    .kanban-board {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(280px, 1fr));
+        gap: 18px;
+        overflow-x: auto;
+        padding-bottom: 16px;
+    }
+
+    .kanban-col {
+        background: #f1f5f9;
+        border-radius: var(--crm-radius);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #e2e8f0;
+        min-height: 520px;
+        max-height: 80vh;
+    }
+
+    .kanban-col-header {
+        padding: 14px 16px;
+        background: #fff;
+        border-top-left-radius: var(--crm-radius);
+        border-top-right-radius: var(--crm-radius);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 4px solid var(--col-color, #4f46e5);
+    }
+
+    .col-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .col-title {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--crm-text-strong);
+    }
+
+    .col-count {
+        background: #e2e8f0;
+        color: #475569;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+
+    .col-val {
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+        font-family: var(--crm-mono);
+    }
+
+    .kanban-cards-container {
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .kanban-cards-container.drag-over {
+        background: #e0e7ff;
+        border: 2px dashed #6366f1;
+        border-radius: 8px;
+    }
+
+    /* ── Kanban Card ── */
+    .lead-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        cursor: grab;
+        transition: transform 0.15s, box-shadow 0.15s;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .lead-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px -2px rgba(0,0,0,0.08);
+        border-color: #cbd5e1;
+    }
+
+    .lead-card.dragging {
+        opacity: 0.5;
+        cursor: grabbing;
+    }
+
+    .card-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .lead-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--crm-text-strong);
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .lead-company {
+        font-size: 12px;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+    }
+
+    .lead-value {
+        font-family: var(--crm-mono);
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #059669;
+        background: #ecfdf5;
+        padding: 3px 8px;
+        border-radius: 6px;
+        align-self: flex-start;
+    }
+
+    .card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 8px;
+        border-top: 1px dashed #f1f5f9;
+        font-size: 11.5px;
+        color: #64748b;
+    }
+
+    .sales-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 2px 7px;
+        border-radius: 12px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .sales-avatar {
+        width: 16px;
+        height: 16px;
+        background: #4f46e5;
+        color: #fff;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        font-weight: bold;
+    }
+
+    .card-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    .stage-move-btn {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 3px 7px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        color: #475569;
+        transition: all 0.15s;
+    }
+
+    .stage-move-btn:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .btn-convert-card {
+        background: #10b981;
+        color: #ffffff !important;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 1px 2px rgba(16, 185, 129, 0.3);
+        transition: all 0.15s;
+    }
+
+    .btn-convert-card:hover {
+        background: #059669;
+        transform: scale(1.02);
+    }
+
+    .converted-tag {
+        font-size: 11px;
+        font-weight: 700;
+        color: #059669;
+        background: #d1fae5;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+
+    /* Toast notification */
+    #crm-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: #1e293b;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2);
+        font-size: 13.5px;
+        font-weight: 500;
+        display: none;
+        z-index: 99999;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="pipeline-wrapper">
+    <!-- Header -->
+    <div class="pipeline-header">
+        <div class="pipeline-title-group">
+            <h1>🎯 Phễu Bán Hàng Trực Quan (Sales Kanban)</h1>
+            <p>Kéo thả các cơ hội để cập nhật tiến trình chốt Sale, theo dõi doanh số dự kiến và chuyển đổi tức thì thành khách hàng chính thức.</p>
+        </div>
+        <div class="pipeline-kpis">
+            <div class="kpi-pill">
+                <span class="kpi-label">Tổng Cơ Hội (Leads)</span>
+                <span class="kpi-val">{{ total_leads_count }}</span>
+            </div>
+            <div class="kpi-pill">
+                <span class="kpi-label">Dòng Tiền Kỳ Vọng (Pipeline)</span>
+                <span class="kpi-val">{{ total_pipeline_value|floatformat:0 }} đ</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <form method="GET" class="filter-group">
+            <input type="text" name="q" value="{{ search_query }}" placeholder="🔍 Tìm kiếm tên hoặc công ty..." class="filter-input" onchange="this.form.submit()">
+            
+            <select name="assigned_to" class="filter-select" onchange="this.form.submit()">
+                <option value="">-- Tất cả nhân viên phụ trách --</option>
+                {% for u in sales_users %}
+                    <option value="{{ u.id }}" {% if selected_assigned == u.id|stringformat:"s" %}selected{% endif %}>
+                        👤 {{ u.get_full_name|default:u.username }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if search_query or selected_assigned %}
+                <a href="{% url 'crm_sales_pipeline' %}" style="font-size: 12.5px; color: #ef4444; font-weight: 600; text-decoration: none;">✕ Xóa lọc</a>
+            {% endif %}
+        </form>
+
+        <a href="/admin/snippets/crm/lead/new/" class="btn-create-lead">
+            <span>+</span> Tiếp nhận Lead mới
+        </a>
+    </div>
+
+    <!-- Kanban Board Grid -->
+    <div class="kanban-board">
+        {% for col in columns %}
+        <div class="kanban-col" data-stage="{{ col.key }}" style="--col-color: {{ col.color }};">
+            <div class="kanban-col-header">
+                <div class="col-title-wrap">
+                    <span class="col-title">{{ col.label }}</span>
+                    <span class="col-count">{{ col.count }}</span>
+                </div>
+                <span class="col-val">{{ col.total_value|floatformat:0 }} đ</span>
+            </div>
+
+            <div class="kanban-cards-container" id="col-{{ col.key }}" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, '{{ col.key }}')">
+                {% for lead in col.leads %}
+                <div class="lead-card" id="lead-{{ lead.id }}" draggable="true" ondragstart="handleDragStart(event, {{ lead.id }}, '{{ col.key }}')" ondragend="handleDragEnd(event)">
+                    <div class="card-top">
+                        <div>
+                            <h4 class="lead-name">{{ lead.name }}</h4>
+                            {% if lead.company %}
+                            <div class="lead-company">🏢 {{ lead.company }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="lead-value">{{ lead.estimated_value|floatformat:0 }} đ</span>
+                        <span style="font-size:11px; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">{{ lead.get_source_display }}</span>
+                    </div>
+
+                    {% if lead.notes %}
+                    <p style="font-size:11.5px; color:#475569; margin:2px 0 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                        💬 {{ lead.notes }}
+                    </p>
+                    {% endif %}
+
+                    <div class="card-meta">
+                        <span class="sales-badge">
+                            <span class="sales-avatar">{{ lead.assigned_to.first_name|first|default:"S" }}</span>
+                            {{ lead.assigned_to.get_full_name|default:lead.assigned_to.username|default:"Chưa gán" }}
+                        </span>
+                        <a href="tel:{{ lead.phone }}" style="text-decoration:none; color:#2563eb; font-weight:600;">📞 {{ lead.phone }}</a>
+                    </div>
+
+                    <div class="card-actions">
+                        <div style="display: flex; gap: 4px;">
+                            <select onchange="changeStageViaSelect({{ lead.id }}, this.value)" style="font-size: 11px; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 4px; background: #fff;">
+                                {% for stage_choice in columns %}
+                                <option value="{{ stage_choice.key }}" {% if stage_choice.key == col.key %}selected{% endif %}>
+                                    ➔ {{ stage_choice.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        {% if lead.is_converted and lead.converted_customer %}
+                            <a href="{% url 'crm_customer_360' lead.converted_customer.id %}" class="converted-tag">
+                                👁️ Hồ sơ 360°
+                            </a>
+                        {% else %}
+                            <a href="{% url 'crm_convert_lead' lead.id %}" class="btn-convert-card">
+                                ⚡ Chuyển đổi
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align: center; color: #94a3b8; font-size: 12.5px; margin: auto; padding: 24px 0;">
+                    Chưa có cơ hội nào
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="crm-toast"></div>
+
+<script>
+    let draggedLeadId = null;
+    let draggedFromStage = null;
+
+    function handleDragStart(e, leadId, currentStage) {
+        draggedLeadId = leadId;
+        draggedFromStage = currentStage;
+        e.target.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', leadId);
+    }
+
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e, targetStage) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+        if (!draggedLeadId || draggedFromStage === targetStage) return;
+
+        updateStage(draggedLeadId, targetStage);
+    }
+
+    function changeStageViaSelect(leadId, newStage) {
+        updateStage(leadId, newStage);
+    }
+
+    function updateStage(leadId, newStage) {
+        showToast("Đang cập nhật trạng thái cơ hội...");
+
+        const formData = new FormData();
+        formData.append('new_status', newStage);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch(`/admin/api/leads/${leadId}/update-stage/`, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Đã chuyển sang: ${data.new_status_display}`);
+                // Refresh board sau 600ms để cập nhật tổng giá trị và vị trí cột
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                showToast(data.error || "Không thể cập nhật trạng thái.");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast("Lỗi kết nối máy chủ.");
+        });
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('crm-toast');
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+</script>
+{% endblock %}

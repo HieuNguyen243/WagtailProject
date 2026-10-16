@@ -51,12 +51,6 @@ Tạo file `.env` từ file mẫu `.env.example`:
   cp .env.example .env
   ```
 
-Mở file `.env` và thêm API key Gemini:
-```env
-GOOGLE_AI_API_KEY=your_gemini_api_key_here
-```
-> 💡 **Lưu ý:** Lấy key miễn phí trong 30 giây tại [Google AI Studio](https://aistudio.google.com/app/apikey). Nếu chưa có key, hệ thống vẫn tự động chạy và tính toán chỉ số dựa trên bộ máy phân tích CRM nội bộ.
-
 ---
 
 ### Bước 5: Khởi tạo Database & Dữ liệu mẫu
@@ -80,7 +74,9 @@ python manage.py runserver
 
 | Trang | Đường dẫn URL | Chức năng |
 |---|---|---|
-| 📊 **AI Dashboard** | `http://127.0.0.1:8000/admin/ai-report/` | Báo cáo phân tích KPI, Biểu đồ & Chiến lược AI |
+| 🤖 **AI Machine Learning** | `http://127.0.0.1:8000/admin/ai-models/` | Quản trị mô hình Ridge Regression (dự báo 30 ngày) & RFM K-Means |
+| 📊 **Superset BI Dashboard** | `http://127.0.0.1:8000/admin/superset/` | Nhúng trực tiếp Apache Superset Dashboard vào Wagtail Admin |
+| 🎯 **Phễu Bán Hàng** | `http://127.0.0.1:8000/admin/pipeline/` | Kanban Board quản lý cơ hội & giai đoạn chuyển đổi Leads |
 | 🦅 **Wagtail Admin** | `http://127.0.0.1:8000/admin/` | Quản lý Khách hàng, Đơn hàng, Trang web |
 | 🛠️ **Django Admin** | `http://127.0.0.1:8000/django-admin/` | Quản trị dữ liệu Django tiêu chuẩn |
 
@@ -92,37 +88,40 @@ python manage.py runserver
 
 ## ✨ Tính năng nổi bật
 
-### 1. 📈 Dashboard Phân tích Kinh doanh AI
-- **4 Thẻ KPI Realtime:** Tổng doanh thu, Tổng đơn hàng, Giá trị đơn trung bình (AOV), Tỷ lệ hoàn thành.
-- **3 Biểu đồ trực quan tương tác (Chart.js 4.4):**
-  - *Doughnut Chart:* Cơ cấu doanh thu theo phương thức thanh toán (MB eBanking, ShopeePay, ZaloPay, MoMo).
-  - *Pie Chart:* Tỷ lệ trạng thái đơn hàng (Hoàn thành / Đang xử lý).
-  - *Bar Chart:* Phân bổ doanh số theo các đơn vị vận chuyển (SPX Express, GHTK, J&T Express).
-- **Phân tích Chiến lược & Đề xuất hành động:**
-  - Gemini AI trích xuất nhận định định lượng theo từng chủ đề (*Dòng tiền, Logistics, Khách hàng...*).
-  - Đề xuất giải pháp hành động kèm mức độ ưu tiên (*Ưu tiên cao, Chiến lược, Tối ưu*).
-- **Bảng Khách hàng VIP:** Avatar chữ cái viết tắt, thanh tỷ trọng đóng góp doanh thu, tự động gắn nhãn phân hạng (*✨ Platinum, 👑 Gold, 💎 Thân thiết*).
-- **Tìm kiếm tức thì:** Lọc trực tiếp khách hàng theo tên, email, hạng thành viên ngay trên giao diện.
-- **Tiện ích xuất báo cáo:** Hỗ trợ In ra file **PDF chuẩn A4** và **Sao chép nội dung Insight** vào Clipboard.
+### 1. 🤖 Bộ máy Machine Learning Cục bộ (Offline ML Engine)
+- **Time-Series Revenue Forecasting:** Mô hình Ridge Regression phân tích xu hướng tăng trưởng và tính chu kỳ 7 ngày, dự báo doanh thu 30 ngày tiếp theo kèm khoảng tin cậy 95%.
+- **Customer Segmentation (RFM + K-Means):** Tự động phân loại 4-5 nhóm khách hàng, tính xác suất rời bỏ (Churn Probability).
+- **Lưu trữ CSDL trung tâm:** Kết quả phân tích được lưu vào các bảng `RevenueForecast` và `CustomerSegment`.
 
-### 2. 👥 Quản lý Khách hàng & Đơn hàng (Wagtail CRM)
-- Thêm, sửa, xóa, tìm kiếm khách hàng.
+### 2. 👥 Quản lý Khách hàng 360 & Đơn hàng (Wagtail CRM)
+- Thêm, sửa, xóa, tìm kiếm khách hàng, xem Customer 360 view.
 - Theo dõi đơn hàng với trạng thái xử lý, cổng thanh toán và bên vận chuyển.
+### 3. 📊 Apache Superset BI & AI Dashboard (7 Biểu Đồ Chuẩn Hóa)
+Hệ thống Dashboard hoàn chỉnh tích hợp trên Apache Superset với bảng màu chủ đạo Xanh dương & Trắng, phông chữ lớn, viền nổi bật (border) ngăn cách rõ ràng giữa các biểu đồ:
+- **🏢 5 Biểu đồ phân tích thực trạng doanh nghiệp:**
+  1. 📈 *Xu hướng Doanh thu & Số đơn hàng theo thời gian* (ECharts Mixed Line)
+  2. 🎯 *Phễu chuyển đổi khách hàng tiềm năng* (Sales Pipeline Funnel)
+  3. 💳 *Cơ cấu doanh thu theo cổng thanh toán & nhà vận chuyển* (Sunburst Chart)
+  4. 🏆 *Top sản phẩm & danh mục mang lại doanh thu cao nhất* (Treemap)
+  5. 🛡️ *Phân bổ phiếu hỗ trợ CSKH theo mức độ ưu tiên & trạng thái* (Stacked Bar Chart)
+- **🤖 2 Biểu đồ hiển thị kết quả mô hình AI:**
+  6. 🤖 *Dự báo doanh thu 30 ngày tới* kèm khoảng tin cậy 95% (AI Ridge Regression Area Chart)
+  7. 🤖 *Phân khúc khách hàng RFM & xác định nguy cơ rời bỏ* (K-Means Clustering Bubble Chart)
+- **Tự động hóa toàn diện:** Chạy `python update_superset_dashboard_perfect.py` để cập nhật tự động toàn bộ 7 biểu đồ và bố cục Dashboard qua REST API.
 
 ---
 
 ## 🛠️ Công nghệ sử dụng (Tech Stack)
 
 - **Backend:** Django 6.1, Wagtail CMS 8.0
-- **AI Engine:** Google Gemini AI REST API (`gemini-3.5-flash-lite`, `gemini-3.8-flash`)
+- **Machine Learning / AI Engine:** Scikit-learn, Pandas, Numpy (Offline ML)
 - **Frontend / UI:** Vanilla CSS & HTML5, Chart.js 4.4, Google Fonts (Plus Jakarta Sans, JetBrains Mono)
 - **Database:** SQLite
-- **Network & Utils:** `httpx`, `python-dotenv`
+- **Utils:** `python-dotenv`
 
 ---
 
 ## 🔒 Bảo mật & Quy tắc Git
 
-- File `.env` chứa API key thật đã được liệt kê trong `.gitignore` và **không bao giờ bị đẩy lên Git**.
+- File `.env` đã được liệt kê trong `.gitignore` và **không bao giờ bị đẩy lên Git**.
 - File `.env.example` cung cấp sẵn template mẫu để đồng đội dễ dàng cấu hình.
-- Hệ thống hỗ trợ **Fallback mượt mà**: Nếu không có API Key hoặc mất mạng, trang Dashboard vẫn tự động hiển thị đầy đủ biểu đồ và báo cáo từ CSDL nội bộ.

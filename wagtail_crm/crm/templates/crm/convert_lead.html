@@ -1,0 +1,231 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n humanize %}
+
+{% block titletag %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --crm-font: 'Plus Jakarta Sans', sans-serif;
+        --crm-mono: 'JetBrains Mono', monospace;
+        --crm-primary: #10b981;
+        --crm-text-strong: #0f172a;
+        --crm-text-body: #334155;
+        --crm-text-muted: #64748b;
+    }
+
+    .convert-container {
+        font-family: var(--crm-font);
+        max-width: 800px;
+        margin: 32px auto;
+        padding: 0 20px 64px;
+        color: var(--crm-text-body);
+    }
+
+    .convert-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06);
+    }
+
+    .convert-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 20px;
+    }
+
+    .convert-icon {
+        width: 52px;
+        height: 52px;
+        background: #ecfdf5;
+        color: #059669;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+    }
+
+    .lead-summary-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 18px 20px;
+        margin-bottom: 24px;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 10px;
+        font-size: 13.5px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 6px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        background: #fff;
+    }
+
+    .form-input:focus {
+        border-color: #10b981;
+    }
+
+    .checkbox-box {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin: 20px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+    }
+
+    .btn-submit {
+        background: #10b981;
+        color: #fff;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 12px 28px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+        transition: all 0.15s;
+    }
+
+    .btn-submit:hover {
+        background: #059669;
+        transform: translateY(-1px);
+    }
+</style>
+
+<div class="convert-container">
+    <div class="convert-card">
+        <div class="convert-header">
+            <div class="convert-icon">🚀</div>
+            <div>
+                <h1 style="font-size: 22px; font-weight: 800; margin: 0; color: #0f172a;">Chuyển Đổi Lead Thành Khách Hàng</h1>
+                <p style="margin: 4px 0 0; color: #64748b; font-size: 13.5px;">Biến cơ hội bán hàng thành hồ sơ khách hàng chính thức và tự động tạo luồng tương tác.</p>
+            </div>
+        </div>
+
+        <!-- Lead Summary -->
+        <div class="lead-summary-box">
+            <div style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Thông tin cơ hội gốc</div>
+            <div class="summary-grid">
+                <div>• Họ và tên: <strong>{{ lead.name }}</strong></div>
+                <div>• Công ty: <strong>{{ lead.company|default:"Khách cá nhân" }}</strong></div>
+                <div>• Điện thoại: <strong>{{ lead.phone }}</strong></div>
+                <div>• Email: <strong>{{ lead.email|default:"Chưa có" }}</strong></div>
+                <div>• Doanh số kỳ vọng: <strong style="color: #059669; font-family: var(--crm-mono);">{{ lead.estimated_value|floatformat:0 }} đ</strong></div>
+                <div>• Nhân viên phụ trách: <strong>{{ lead.assigned_to.get_full_name|default:lead.assigned_to.username }}</strong></div>
+            </div>
+            {% if lead.notes %}
+            <div style="margin-top: 10px; font-size: 12.5px; color: #475569; background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                💬 <em>{{ lead.notes }}</em>
+            </div>
+            {% endif %}
+        </div>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            {% if matched_customer %}
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;">
+                <div style="font-weight: 700; color: #b45309; font-size: 14px;">⚠️ Tìm thấy khách hàng trùng khớp trong hệ thống!</div>
+                <div style="font-size: 13px; color: #92400e; margin-top: 4px;">
+                    Đã có khách hàng <strong>{{ matched_customer.name }}</strong> ({{ matched_customer.phone }} - {{ matched_customer.email }}).
+                </div>
+                <div style="margin-top: 12px; display: flex; gap: 16px;">
+                    <label style="font-size: 13px; font-weight: 600; cursor: pointer;">
+                        <input type="radio" name="action_mode" value="link_existing" checked>
+                        Gắn cơ hội này vào khách hàng <strong>{{ matched_customer.name }}</strong>
+                    </label>
+                    <label style="font-size: 13px; font-weight: 600; cursor: pointer;">
+                        <input type="radio" name="action_mode" value="create_new">
+                        Vẫn tạo mới một hồ sơ khách hàng riêng
+                    </label>
+                </div>
+            </div>
+            {% endif %}
+
+            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 12px;">Hồ sơ khách hàng sẽ tạo:</h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label>Họ và tên khách hàng *</label>
+                    <input type="text" name="name" value="{{ lead.name }}" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Công ty / Tổ chức</label>
+                    <input type="text" name="company" value="{{ lead.company }}" class="form-input">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                    <label>Số điện thoại *</label>
+                    <input type="text" name="phone" value="{{ lead.phone }}" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label>Email liên hệ</label>
+                    <input type="email" name="email" value="{{ lead.email }}" class="form-input">
+                </div>
+            </div>
+
+            {% if lead.estimated_value > 0 %}
+            <label class="checkbox-box">
+                <input type="checkbox" name="create_initial_order" value="1" checked style="width: 18px; height: 18px; accent-color: #10b981;">
+                <div>
+                    <strong style="color: #065f46; font-size: 13.5px;">Khởi tạo ngay 1 đơn hàng mới cho khách hàng này</strong>
+                    <div style="font-size: 12px; color: #047857; margin-top: 2px;">
+                        Tự động sinh đơn hàng trị giá <span style="font-family: var(--crm-mono); font-weight: 700;">{{ lead.estimated_value|floatformat:0 }} đ</span> ở trạng thái "Đang xử lý".
+                    </div>
+                </div>
+            </label>
+            {% endif %}
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid #f1f5f9;">
+                <a href="{% url 'crm_sales_pipeline' %}" style="text-decoration: none; color: #64748b; font-weight: 600; font-size: 13.5px;">
+                    ← Quay lại Phễu Bán Hàng
+                </a>
+                <button type="submit" class="btn-submit">
+                    🚀 Xác Nhận Chuyển Đổi & Mở Hồ Sơ 360°
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

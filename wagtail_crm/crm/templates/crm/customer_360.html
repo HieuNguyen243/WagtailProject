@@ -1,0 +1,845 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n humanize %}
+
+{% block titletag %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --crm-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        --crm-mono: 'JetBrains Mono', monospace;
+        --crm-bg: #f8fafc;
+        --crm-surface: #ffffff;
+        --crm-border: #e2e8f0;
+        --crm-primary: #4f46e5;
+        --crm-text-strong: #0f172a;
+        --crm-text-body: #334155;
+        --crm-text-muted: #64748b;
+        --crm-radius: 12px;
+    }
+
+    .profile-container {
+        font-family: var(--crm-font);
+        background: var(--crm-bg);
+        min-height: calc(100vh - 80px);
+        padding: 24px 32px 64px;
+        color: var(--crm-text-body);
+    }
+
+    /* ── Hero Profile Card ── */
+    .hero-card {
+        background: #ffffff;
+        border: 1px solid var(--crm-border);
+        border-radius: var(--crm-radius);
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .profile-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .avatar-circle {
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 800;
+        box-shadow: 0 8px 16px -4px rgba(79, 70, 229, 0.35);
+    }
+
+    .profile-info h1 {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--crm-text-strong);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .company-sub {
+        font-size: 13.5px;
+        color: #64748b;
+        margin-top: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .badge-tier {
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .tier-platinum { background: #f1f5f9; color: #0f172a; border: 1px solid #cbd5e1; }
+    .tier-gold { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .tier-silver { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+    .tier-standard { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
+
+    .contact-chips {
+        display: flex;
+        gap: 12px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        color: #475569;
+        background: #f8fafc;
+        padding: 3px 10px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        text-decoration: none;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-action-primary {
+        background: var(--crm-primary);
+        color: #fff !important;
+        font-weight: 600;
+        font-size: 13.5px;
+        padding: 9px 18px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 4px rgba(79,70,229,0.25);
+    }
+
+    .btn-action-secondary {
+        background: #fff;
+        color: #334155 !important;
+        border: 1px solid var(--crm-border);
+        font-weight: 600;
+        font-size: 13.5px;
+        padding: 9px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* ── Metrics Grid ── */
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .metric-card {
+        background: #fff;
+        border: 1px solid var(--crm-border);
+        border-radius: var(--crm-radius);
+        padding: 18px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .metric-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--crm-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .metric-value {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--crm-text-strong);
+        margin-top: 6px;
+        font-family: var(--crm-mono);
+    }
+
+    .tier-bar-wrap {
+        margin-top: 10px;
+        background: #e2e8f0;
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .tier-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #059669);
+        border-radius: 4px;
+    }
+
+    /* ── Tabbed View ── */
+    .tabs-nav {
+        display: flex;
+        gap: 8px;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #64748b;
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tab-btn.active {
+        color: var(--crm-primary);
+        border-bottom-color: var(--crm-primary);
+    }
+
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    /* ── Quick Interaction Form ── */
+    .quick-logger-card {
+        background: #fff;
+        border: 1px solid var(--crm-border);
+        border-radius: var(--crm-radius);
+        padding: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .logger-header {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--crm-text-strong);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .type-radios {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+    .type-radio-label {
+        border: 1px solid #cbd5e1;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f8fafc;
+        transition: all 0.15s;
+    }
+
+    .type-radio-label:has(input:checked) {
+        border-color: var(--crm-primary);
+        background: #eff6ff;
+        color: var(--crm-primary);
+    }
+
+    .type-radio-label input {
+        display: none;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .form-input, .form-textarea, .form-select {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid var(--crm-border);
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-family: inherit;
+        outline: none;
+        background: #f8fafc;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+        border-color: var(--crm-primary);
+        background: #fff;
+    }
+
+    /* ── Timeline ── */
+    .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        position: relative;
+        padding-left: 28px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: #e2e8f0;
+    }
+
+    .timeline-item {
+        position: relative;
+        background: #fff;
+        border: 1px solid var(--crm-border);
+        border-radius: 10px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .timeline-node {
+        position: absolute;
+        left: -28px;
+        top: 16px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #4f46e5;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        border: 3px solid #f8fafc;
+    }
+
+    .node-call { background: #0ea5e9; }
+    .node-email { background: #8b5cf6; }
+    .node-meeting { background: #f59e0b; }
+    .node-note { background: #10b981; }
+
+    .timeline-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .timeline-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--crm-text-strong);
+    }
+
+    .timeline-time {
+        font-size: 12px;
+        color: #94a3b8;
+    }
+
+    .timeline-body {
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.5;
+    }
+
+    /* ── Tables ── */
+    .data-table-card {
+        background: #fff;
+        border: 1px solid var(--crm-border);
+        border-radius: var(--crm-radius);
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .crm-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .crm-table th {
+        background: #f8fafc;
+        padding: 12px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #475569;
+        border-bottom: 1px solid #e2e8f0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .crm-table td {
+        padding: 14px 16px;
+        font-size: 13.5px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+    }
+
+    .crm-table tr:hover td {
+        background: #f8fafc;
+    }
+
+    .status-badge {
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 12px;
+        display: inline-block;
+    }
+
+    .badge-completed { background: #d1fae5; color: #065f46; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-open { background: #dbeafe; color: #1e40af; }
+    .badge-in_progress { background: #fef3c7; color: #92400e; }
+    .badge-resolved { background: #d1fae5; color: #065f46; }
+
+    /* Modal for Quick Order */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-box {
+        background: #fff;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 520px;
+        padding: 24px;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    }
+</style>
+
+<div class="profile-container">
+    <!-- Hero Profile Info -->
+    <div class="hero-card">
+        <div class="profile-left">
+            <div class="avatar-circle">
+                {{ customer.name|first|upper }}
+            </div>
+            <div class="profile-info">
+                <h1>
+                    {{ customer.name }}
+                    <span class="badge-tier tier-{{ customer.tier }}">
+                        {% if customer.tier == 'platinum' %}✨ Platinum
+                        {% elif customer.tier == 'gold' %}👑 Gold
+                        {% elif customer.tier == 'silver' %}💎 Silver
+                        {% else %}🌱 Standard{% endif %}
+                    </span>
+                    <span style="font-size: 11px; background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 6px; font-weight: 600;">
+                        {{ customer.get_customer_type_display }}
+                    </span>
+                </h1>
+                {% if customer.company %}
+                <div class="company-sub">🏢 {{ customer.company }}</div>
+                {% endif %}
+
+                <div class="contact-chips">
+                    <a href="tel:{{ customer.phone }}" class="chip">📞 {{ customer.phone|default:"Chưa có SĐT" }}</a>
+                    <a href="mailto:{{ customer.email }}" class="chip">✉️ {{ customer.email }}</a>
+                    {% if customer.address %}
+                    <span class="chip">📍 {{ customer.address }}</span>
+                    {% endif %}
+                    <span class="chip">👤 Quản lý: <strong>{{ customer.assigned_to.get_full_name|default:customer.assigned_to.username|default:"Chưa gán" }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-actions">
+            <button onclick="openOrderModal()" class="btn-action-primary">
+                <span>+</span> Tạo đơn hàng nhanh
+            </button>
+            <a href="/admin/snippets/crm/customer/edit/{{ customer.id }}/" class="btn-action-secondary">
+                ✏️ Sửa hồ sơ
+            </a>
+            <a href="{% url 'crm_sales_pipeline' %}" class="btn-action-secondary">
+                ← Về Phễu Bán Hàng
+            </a>
+        </div>
+    </div>
+
+    <!-- Metrics Summary -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-title">Tổng Chi Tiêu (LTV)</div>
+            <div class="metric-value" style="color: #059669;">{{ customer.total_spent|floatformat:0 }} đ</div>
+            <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">Từ các đơn hàng hoàn tất</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-title">Đơn Hàng Thực Hiện</div>
+            <div class="metric-value" style="color: #2563eb;">{{ customer.completed_orders_count }} / {{ customer.orders.count }}</div>
+            <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">{{ customer.pending_orders_count }} đơn đang xử lý</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-title">Sự Cố / Ticket CSKH</div>
+            <div class="metric-value" style="color: #d97706;">{{ customer.active_tickets_count }}</div>
+            <div style="font-size: 11.5px; color: #64748b; margin-top: 4px;">Phiếu hỗ trợ đang mở</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-title">Tiến Độ Thăng Hạng</div>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px;">
+                <span style="font-size: 15px; font-weight: 700; color: #0f172a;">{{ tier_progress.percent }}%</span>
+                <span style="font-size: 11.5px; color: #64748b; font-weight: 600;">Mục tiêu: {{ tier_progress.next }}</span>
+            </div>
+            <div class="tier-bar-wrap">
+                <div class="tier-bar-fill" style="width: {{ tier_progress.percent }}%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs-nav">
+        <div class="tab-btn active" onclick="switchTab('interactions', this)">
+            📞 Lịch Sử Tương Tác ({{ interactions.count }})
+        </div>
+        <div class="tab-btn" onclick="switchTab('orders', this)">
+            📦 Danh Sách Đơn Hàng ({{ orders.count }})
+        </div>
+        <div class="tab-btn" onclick="switchTab('tickets', this)">
+            🎫 Phiếu Hỗ Trợ ({{ tickets.count }})
+        </div>
+        {% if origin_leads %}
+        <div class="tab-btn" onclick="switchTab('origin', this)">
+            🚀 Nguồn Gốc Lead ({{ origin_leads.count }})
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- TAB 1: INTERACTIONS TIMELINE -->
+    <div id="tab-interactions" class="tab-pane active">
+        <!-- Quick Logger Form -->
+        <div class="quick-logger-card">
+            <div class="logger-header">
+                <span>⚡</span> Ghi chú nhanh hoạt động chăm sóc khách hàng
+            </div>
+            <form method="POST" action="{% url 'crm_quick_interaction' customer.id %}">
+                {% csrf_token %}
+                <div class="type-radios">
+                    <label class="type-radio-label">
+                        <input type="radio" name="interaction_type" value="call" checked>
+                        <span>📞 Cuộc gọi điện</span>
+                    </label>
+                    <label class="type-radio-label">
+                        <input type="radio" name="interaction_type" value="email">
+                        <span>✉️ Gửi email</span>
+                    </label>
+                    <label class="type-radio-label">
+                        <input type="radio" name="interaction_type" value="meeting">
+                        <span>🤝 Hẹn gặp / Demo</span>
+                    </label>
+                    <label class="type-radio-label">
+                        <input type="radio" name="interaction_type" value="note">
+                        <span>📝 Ghi chú nội bộ</span>
+                    </label>
+                </div>
+
+                <div class="form-row">
+                    <input type="text" name="summary" class="form-input" placeholder="Tiêu đề tóm tắt (vd: Trao đổi hợp đồng, Khách hẹn gọi lại...)" required>
+                    <input type="date" name="follow_up_date" class="form-input" title="Lịch hẹn tiếp theo (Follow-up)">
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <textarea name="content" class="form-textarea" rows="2" placeholder="Chi tiết nội dung cuộc trao đổi với khách..."></textarea>
+                </div>
+
+                <div style="text-align: right;">
+                    <button type="submit" class="btn-action-primary" style="border: none; cursor: pointer;">
+                        💾 Lưu Nhật Ký Tương Tác
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Vertical Timeline -->
+        <div class="timeline">
+            {% for act in interactions %}
+            <div class="timeline-item">
+                <div class="timeline-node node-{{ act.interaction_type }}">
+                    {% if act.interaction_type == 'call' %}📞
+                    {% elif act.interaction_type == 'email' %}✉️
+                    {% elif act.interaction_type == 'meeting' %}🤝
+                    {% else %}📝{% endif %}
+                </div>
+                <div class="timeline-header">
+                    <span class="timeline-title">{{ act.summary }}</span>
+                    <span class="timeline-time">{{ act.interaction_date|date:"H:i, d/m/Y" }}</span>
+                </div>
+                {% if act.content %}
+                <div class="timeline-body">{{ act.content }}</div>
+                {% endif %}
+                <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11.5px; color: #64748b;">
+                    <span>Bởi: <strong>{{ act.user.get_full_name|default:act.user.username|default:"Hệ thống" }}</strong></span>
+                    {% if act.follow_up_date %}
+                    <span style="color: #d97706; font-weight: 600;">⏰ Lịch hẹn follow-up: {{ act.follow_up_date|date:"d/m/Y" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align: center; padding: 32px; color: #94a3b8; background: #fff; border-radius: 8px;">
+                Chưa có lịch sử chăm sóc nào cho khách hàng này.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- TAB 2: ORDERS -->
+    <div id="tab-orders" class="tab-pane">
+        <div class="data-table-card">
+            <table class="crm-table">
+                <thead>
+                    <tr>
+                        <th>Mã Đơn Hàng</th>
+                        <th>Ngày Đặt</th>
+                        <th>Chi Tiết Mặt Hàng</th>
+                        <th>Thanh Toán</th>
+                        <th>Vận Chuyển</th>
+                        <th>Tổng Tiền</th>
+                        <th>Trạng Thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ord in orders %}
+                    <tr>
+                        <td>
+                            <a href="/admin/snippets/crm/order/edit/{{ ord.id }}/" style="font-weight: 700; color: #4f46e5; text-decoration: none;">
+                                {{ ord.order_code }}
+                            </a>
+                        </td>
+                        <td style="font-size: 12.5px; color: #64748b;">{{ ord.created_at|date:"d/m/Y" }}</td>
+                        <td>
+                            {% for item in ord.items.all %}
+                                <div style="font-size: 12px; margin-bottom: 2px;">• {{ item.product.name }} (x{{ item.quantity }})</div>
+                            {% empty %}
+                                <span style="color: #94a3b8; font-size: 12px;">Đơn tổng hợp</span>
+                            {% endfor %}
+                        </td>
+                        <td><span style="font-size: 12px;">{{ ord.get_payment_method_display }}</span></td>
+                        <td><span style="font-size: 12px;">{{ ord.get_shipping_provider_display }}</span></td>
+                        <td>
+                            <span style="font-weight: 700; font-family: var(--crm-mono); color: #059669;">
+                                {{ ord.total_amount|floatformat:0 }} đ
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge badge-{{ ord.status }}">
+                                {{ ord.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 32px; color: #94a3b8;">
+                            Khách hàng chưa phát sinh đơn hàng nào.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: SUPPORT TICKETS -->
+    <div id="tab-tickets" class="tab-pane">
+        <div class="data-table-card">
+            <table class="crm-table">
+                <thead>
+                    <tr>
+                        <th>Mã Ticket</th>
+                        <th>Tiêu Đề Vấn Đề</th>
+                        <th>Ưu Tiên</th>
+                        <th>Trạng Thái</th>
+                        <th>Kỹ Thuật Phụ Trách</th>
+                        <th>Thời Gian Tiếp Nhận</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tck in tickets %}
+                    <tr>
+                        <td>
+                            <a href="/admin/snippets/crm/supportticket/edit/{{ tck.id }}/" style="font-weight: 700; color: #4f46e5; text-decoration: none;">
+                                {{ tck.ticket_code }}
+                            </a>
+                        </td>
+                        <td>
+                            <strong>{{ tck.subject }}</strong>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">{{ tck.description|truncatechars:80 }}</div>
+                        </td>
+                        <td>
+                            <span style="font-weight: 700; font-size: 12px; color: {% if tck.priority == 'urgent' %}#dc2626{% elif tck.priority == 'high' %}#ea580c{% else %}#475569{% endif %};">
+                                {{ tck.get_priority_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge badge-{{ tck.status }}">
+                                {{ tck.get_status_display }}
+                            </span>
+                        </td>
+                        <td>{{ tck.assigned_to.get_full_name|default:tck.assigned_to.username|default:"Chưa gán" }}</td>
+                        <td style="font-size: 12.5px; color: #64748b;">{{ tck.created_at|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 32px; color: #94a3b8;">
+                            Khách hàng chưa có phiếu hỗ trợ nào.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 4: ORIGIN LEADS -->
+    {% if origin_leads %}
+    <div id="tab-origin" class="tab-pane">
+        <div class="data-table-card" style="padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 700; margin-top: 0;">🚀 Thông tin chuyển đổi từ Lead ban đầu</h3>
+            {% for l in origin_leads %}
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; font-size: 15px; font-weight: 700;">{{ l.name }} (Lead #{{ l.id }})</h4>
+                    <span style="font-size: 12px; color: #059669; font-weight: 700;">Chuyển đổi lúc: {{ l.converted_at|date:"H:i d/m/Y" }}</span>
+                </div>
+                <div style="font-size: 13px; color: #475569; margin-top: 8px;">
+                    • Nguồn tiếp cận: <strong>{{ l.get_source_display }}</strong> | Doanh số kỳ vọng: <strong>{{ l.estimated_value|floatformat:0 }} đ</strong>
+                </div>
+                {% if l.notes %}
+                <div style="font-size: 13px; color: #475569; margin-top: 6px;">
+                    • Nhu cầu ban đầu: {{ l.notes }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal Tạo Đơn Hàng Nhanh -->
+<div id="orderModal" class="modal-overlay" onclick="closeOrderModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <h2 style="font-size: 18px; font-weight: 800; margin: 0 0 16px; color: #0f172a;">🛒 Tạo Đơn Hàng Nhanh</h2>
+        <form method="POST" action="{% url 'crm_quick_create_order' customer.id %}">
+            {% csrf_token %}
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 6px;">Chọn Sản phẩm / Dịch vụ</label>
+                <select name="product_id" class="form-select" required>
+                    {% for p in active_products %}
+                    <option value="{{ p.id }}">{{ p.name }} — {{ p.price|floatformat:0 }} đ</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div>
+                    <label style="display: block; font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 6px;">Số lượng</label>
+                    <input type="number" name="quantity" value="1" min="1" max="100" class="form-input" required>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 6px;">Cổng thanh toán</label>
+                    <select name="payment_method" class="form-select">
+                        <option value="MB_eBanking">MB eBanking</option>
+                        <option value="ShopeePay">ShopeePay</option>
+                        <option value="ZaloPay">ZaloPay</option>
+                        <option value="MoMo">MoMo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 6px;">Đơn vị vận chuyển</label>
+                <select name="shipping_provider" class="form-select">
+                    <option value="SPX_Express">SPX Express</option>
+                    <option value="GHTK">GHTK</option>
+                    <option value="J_and_T_Express">J&T Express</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <label style="display: block; font-size: 12.5px; font-weight: 700; color: #475569; margin-bottom: 6px;">Ghi chú giao hàng</label>
+                <input type="text" name="notes" class="form-input" placeholder="Ghi chú giao hàng nếu có...">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" onclick="closeOrderModal()" class="btn-action-secondary" style="border: none; cursor: pointer;">Hủy</button>
+                <button type="submit" class="btn-action-primary" style="border: none; cursor: pointer;">Tạo Đơn Hàng</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabName, btnElem) {
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        const targetPane = document.getElementById('tab-' + tabName);
+        if (targetPane) {
+            targetPane.classList.add('active');
+            btnElem.classList.add('active');
+        }
+    }
+
+    // Auto open tab from query string (?tab=orders)
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialTab = urlParams.get('tab');
+    if (initialTab) {
+        const btn = document.querySelector(`[onclick="switchTab('${initialTab}', this)"]`);
+        if (btn) switchTab(initialTab, btn);
+    }
+
+    function openOrderModal() {
+        document.getElementById('orderModal').style.display = 'flex';
+    }
+
+    function closeOrderModal(e) {
+        document.getElementById('orderModal').style.display = 'none';
+    }
+</script>
+{% endblock %}

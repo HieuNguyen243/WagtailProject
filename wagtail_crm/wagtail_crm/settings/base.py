@@ -47,10 +47,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "crm.middleware.SupersetIframeSecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -183,3 +187,47 @@ WAGTAILDOCS_EXTENSIONS = ['csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'tx
 
 # Maximum upload size for documents in bytes.
 WAGTAILDOCS_MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
+
+# ==============================================================================
+# 🌐 WHITELIST CHO APACHE SUPERSET (CỔNG 8088) & TÍCH HỢP IFRAME
+# ==============================================================================
+
+# 1. CSRF Trusted Origins Whitelist (Django 4+)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8088",
+    "http://127.0.0.1:8088",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+# 2. CORS Allowed Origins Whitelist (django-cors-headers)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8088",
+    "http://127.0.0.1:8088",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+# Alias tương thích ngược cho cấu hình whitelist cũ
+CORS_ORIGIN_WHITELIST = CORS_ALLOWED_ORIGINS
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# 3. Iframe & Framing Security Settings
+X_FRAME_OPTIONS = "SAMEORIGIN"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+
+# URL mặc định cho Superset Dashboard (ID 11)
+SUPERSET_DASHBOARD_URL = "http://localhost:8088/superset/dashboard/11/?standalone=1"

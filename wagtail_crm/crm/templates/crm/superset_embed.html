@@ -1,0 +1,406 @@
+{% extends "wagtailadmin/base.html" %}
+{% load i18n humanize %}
+
+{% block titletag %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --ss-font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        --ss-mono: 'JetBrains Mono', monospace;
+        --ss-bg: #f8fafc;
+        --ss-surface: #ffffff;
+        --ss-border: #e2e8f0;
+        --ss-primary: #0284c7;
+        --ss-primary-dark: #0369a1;
+        --ss-text-strong: #0f172a;
+        --ss-text-body: #334155;
+        --ss-text-muted: #64748b;
+        --ss-radius: 12px;
+    }
+
+    .superset-wrapper {
+        font-family: var(--ss-font);
+        background: var(--ss-bg);
+        min-height: calc(100vh - 80px);
+        padding: 20px 28px 48px;
+        color: var(--ss-text-body);
+    }
+
+    /* Top Bar */
+    .superset-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        padding: 16px 24px;
+        border-radius: var(--ss-radius);
+        border: 1px solid var(--ss-border);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        margin-bottom: 16px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .superset-logo {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, #20a7c9 0%, #0087a3 100%);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 800;
+        font-size: 18px;
+    }
+
+    .header-left h1 {
+        font-size: 18px;
+        font-weight: 800;
+        margin: 0 0 2px 0;
+        color: var(--ss-text-strong);
+    }
+
+    .header-left p {
+        font-size: 12px;
+        margin: 0;
+        color: var(--ss-text-muted);
+    }
+
+    .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .url-form {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .url-input {
+        font-family: var(--ss-mono);
+        font-size: 12px;
+        padding: 7px 12px;
+        border: 1px solid var(--ss-border);
+        border-radius: 6px;
+        width: 340px;
+        outline: none;
+    }
+
+    .url-input:focus {
+        border-color: var(--ss-primary);
+        box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+    }
+
+    .btn-save-url {
+        background: var(--ss-primary);
+        color: #fff;
+        border: none;
+        padding: 7px 14px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .btn-save-url:hover {
+        background: var(--ss-primary-dark);
+    }
+
+    .btn-tool {
+        background: #f1f5f9;
+        color: var(--ss-text-strong);
+        border: 1px solid var(--ss-border);
+        padding: 7px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 12px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .btn-tool:hover {
+        background: #e2e8f0;
+        color: var(--ss-text-strong);
+    }
+
+    /* DB Status Strip */
+    .db-status-bar {
+        background: linear-gradient(90deg, #f0fdf4 0%, #ecfeff 100%);
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 10px 18px;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+    }
+
+    .db-status-items {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+    }
+
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+    }
+
+    .table-tag {
+        font-family: var(--ss-mono);
+        background: #ffffff;
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+        font-size: 11px;
+    }
+
+    /* Iframe Container */
+    .iframe-box {
+        background: #ffffff;
+        border-radius: var(--ss-radius);
+        border: 1px solid var(--ss-border);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        overflow: hidden;
+        position: relative;
+        height: calc(100vh - 240px);
+        min-height: 600px;
+    }
+
+    .superset-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+    }
+
+    /* Fallback / Guidance Box */
+    .guidance-box {
+        padding: 32px 24px;
+        background: #ffffff;
+        border-radius: var(--ss-radius);
+        border: 1px solid var(--ss-border);
+        margin-top: 16px;
+    }
+
+    .guidance-box h3 {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--ss-text-strong);
+        margin: 0 0 12px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .guidance-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 14px;
+    }
+
+    .guidance-card {
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .guidance-card h4 {
+        margin: 0 0 6px 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .guidance-card p {
+        margin: 0;
+        font-size: 12px;
+        color: var(--ss-text-muted);
+        line-height: 1.5;
+    }
+
+    .code-snippet {
+        font-family: var(--ss-mono);
+        background: #0f172a;
+        color: #38bdf8;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        margin-top: 8px;
+        word-break: break-all;
+    }
+</style>
+
+<div class="superset-wrapper">
+    <!-- Header -->
+    <div class="superset-header">
+        <div class="header-left">
+            <div class="superset-logo">S</div>
+            <div>
+                <h1>Apache Superset BI Integration</h1>
+                <p>Nền tảng trực quan hóa dữ liệu kinh doanh & Phân tích dự báo AI</p>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <!-- Form cập nhật URL Dashboard -->
+            <form method="POST" class="url-form">
+                {% csrf_token %}
+                <input
+                    type="url"
+                    name="superset_url"
+                    class="url-input"
+                    value="{{ superset_url }}"
+                    placeholder="http://localhost:8088/superset/dashboard/..."
+                    title="Nhập URL Dashboard Superset"
+                >
+                <button type="submit" class="btn-save-url">Lưu URL</button>
+                <button type="submit" name="action" value="reset" class="btn-tool" style="padding: 6px 10px; font-size: 12px;" title="Đặt lại URL Dashboard 11 mặc định">
+                    ↺ Mặc định
+                </button>
+                <button type="button" class="btn-tool" onclick="setUrl('http://127.0.0.1:8088/dashboard/11/?standalone=1')" style="font-size: 11px; padding: 6px 9px;" title="Thử kết nối qua 127.0.0.1">
+                    ⚡ 127.0.0.1
+                </button>
+                <button type="button" class="btn-tool" onclick="setUrl('http://localhost:8088/dashboard/11/?standalone=1')" style="font-size: 11px; padding: 6px 9px;" title="Thử kết nối qua localhost">
+                    ⚡ localhost
+                </button>
+            </form>
+
+            <button type="button" class="btn-tool" onclick="reloadIframe()" title="Tải lại Dashboard">
+                🔄 Làm mới
+            </button>
+            <button type="button" class="btn-tool" onclick="toggleFullscreen()" title="Xem toàn màn hình">
+                ⛶ Toàn màn hình
+            </button>
+            <a href="{{ superset_url }}" target="_blank" rel="noopener noreferrer" class="btn-tool" title="Mở trong tab mới">
+                ↗️ Mở tab mới
+            </a>
+            <a href="{% url 'crm_ai_models_dashboard' %}" class="btn-tool" style="background:#4338ca; color:#fff; border-color:#4338ca;">
+                🤖 Mô hình AI Cục bộ
+            </a>
+        </div>
+    </div>
+
+    <!-- Data Hub Status Bar -->
+    <div class="db-status-bar">
+        <div class="db-status-items">
+            <span class="status-badge">
+                <span class="dot"></span> CSDL Trung Tâm: <strong>{{ db_name }}</strong>
+            </span>
+            <span>
+                Bảng Dự báo AI: <span class="table-tag">crm_revenueforecast</span> (<strong>{{ revenue_rows }}</strong> dòng)
+            </span>
+            <span>
+                Bảng Phân khúc AI: <span class="table-tag">crm_customersegment</span> (<strong>{{ segment_rows }}</strong> dòng)
+            </span>
+            <span>
+                Bảng Đơn hàng gốc: <span class="table-tag">crm_order</span> (<strong>{{ order_rows }}</strong> dòng)
+            </span>
+        </div>
+        <div>
+            <span style="color: #047857; font-weight: 700;">✅ Sẵn sàng cho Superset truy vấn</span>
+        </div>
+    </div>
+
+    <!-- Iframe Embed Box -->
+    <div class="iframe-box" id="iframeBox">
+        <iframe
+            id="supersetIframe"
+            class="superset-iframe"
+            src="{{ superset_url }}"
+            allow="fullscreen"
+            loading="lazy"
+        ></iframe>
+    </div>
+
+    <!-- Hướng dẫn Cấu hình Superset -->
+    <div class="guidance-box">
+        <h3><span>💡</span> Hướng Dẫn Kết Nối CSDL & Xây Dựng Biểu Đồ Trên Apache Superset</h3>
+        <p style="font-size: 13px; color: var(--ss-text-muted); margin: 0;">
+            Dữ liệu dự báo doanh thu và phân khúc khách hàng từ mô hình Machine Learning đã được lưu tự động vào các bảng CSDL. Bạn có thể kết nối Superset để dựng biểu đồ theo các bước sau:
+        </p>
+
+        <div class="guidance-grid">
+            <div class="guidance-card">
+                <h4>1. Kết nối CSDL vào Superset</h4>
+                <p>Trong Superset, vào <strong>Settings ➔ Database Connections ➔ + Database</strong>. Chọn SQLite (hoặc PostgreSQL/Supabase):</p>
+                <div class="code-snippet">sqlite:////d:/HocTap/BI/WagtailPrj/wagtail_crm/db.sqlite3</div>
+            </div>
+
+            <div class="guidance-card">
+                <h4>2. Tạo Dataset từ Bảng AI</h4>
+                <p>Vào <strong>Datasets ➔ + Dataset</strong> và chọn 2 bảng đã được mô hình AI xuất dữ liệu sẵn:</p>
+                <div class="code-snippet">crm_revenueforecast<br>crm_customersegment</div>
+            </div>
+
+            <div class="guidance-card">
+                <h4>3. Biểu đồ khuyến nghị dựng trên Superset</h4>
+                <p>• <strong>Line Chart:</strong> Doanh thu dự báo theo <code>forecast_date</code> kèm dải <code>lower_bound</code> & <code>upper_bound</code>.</p>
+                <p>• <strong>Pie / Donut Chart:</strong> Tỷ trọng theo <code>segment_label</code>.</p>
+                <p>• <strong>Bar Chart:</strong> Số lượng khách hàng theo <code>churn_risk</code>.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setUrl(url) {
+        const input = document.querySelector(".url-input");
+        const iframe = document.getElementById("supersetIframe");
+        if (input) input.value = url;
+        if (iframe) iframe.src = url;
+    }
+
+    function reloadIframe() {
+        const iframe = document.getElementById("supersetIframe");
+        if (iframe) {
+            iframe.src = iframe.src;
+        }
+    }
+
+    function toggleFullscreen() {
+        const elem = document.getElementById("iframeBox");
+        if (!document.fullscreenElement) {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
+</script>
+{% endblock %}
